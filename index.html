@@ -1,0 +1,1825 @@
+<!DOCTYPE html>
+<html lang="en" class="dark"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BDAY_OS // v2.0.26 — Telemetry &amp; Celebration Console</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;display=swap" rel="stylesheet">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js" crossorigin="anonymous"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        chassis: '#090a0f',
+                        panel: '#0f1118',
+                        surface: '#151822',
+                        hairline: '#232838',
+                        accent: {
+                            amber: '#ff5e1a',
+                            cyan: '#00e5ff',
+                            emerald: '#10b981',
+                            violet: '#8b5cf6'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        :root {
+            --bg-chassis: #090a0f;
+            --grid-line: rgba(255, 255, 255, 0.032);
+            --grid-line-accent: rgba(0, 229, 255, 0.05);
+        }
+
+        body {
+            background-color: var(--bg-chassis);
+            color: #e2e8f0;
+            font-family: 'Inter', sans-serif;
+            background-image:
+                linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+                linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px),
+                linear-gradient(to right, var(--grid-line-accent) 1px, transparent 1px),
+                linear-gradient(to bottom, var(--grid-line-accent) 1px, transparent 1px);
+            background-size: 24px 24px, 24px 24px, 120px 120px, 120px 120px;
+            overflow-x: hidden;
+        }
+
+        /* Precision Hardware Panel */
+        .hw-panel {
+            background: rgba(15, 17, 24, 0.88);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid #232838;
+            box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.65), inset 0 1px 0 0 rgba(255, 255, 255, 0.04);
+        }
+
+        /* Tactile Teenage Engineering Inspired Button */
+        .te-btn {
+            transition: transform 0.08s ease, box-shadow 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+            box-shadow: 0 3px 0 0 #050608;
+        }
+        .te-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 1px 0 0 #050608;
+        }
+
+        /* Editable Fields */
+        [contenteditable="true"] {
+            outline: none;
+            border-bottom: 1px dashed rgba(148, 163, 184, 0.35);
+            transition: all 0.15s ease;
+            border-radius: 3px;
+            padding: 1px 5px;
+        }
+        [contenteditable="true"]:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-bottom-color: #00e5ff;
+        }
+        [contenteditable="true"]:focus {
+            background: rgba(0, 229, 255, 0.08);
+            border-bottom: 1px solid #00e5ff;
+            box-shadow: 0 0 0 2px rgba(0, 229, 255, 0.18);
+        }
+
+        /* Plasma / LED Candle Flame Animation */
+        .plasma-flame {
+            transform-origin: center bottom;
+            animation: plasmaOscillate 0.75s infinite alternate ease-in-out;
+            filter: drop-shadow(0 0 8px rgba(255, 94, 26, 0.85));
+            transition: opacity 0.22s ease, transform 0.22s ease;
+        }
+        .plasma-flame.extinguished {
+            opacity: 0;
+            transform: scale(0);
+            animation: none;
+        }
+
+        @keyframes plasmaOscillate {
+            0% { transform: scale(1, 1) skewX(-2deg); }
+            33% { transform: scale(1.05, 0.94) skewX(2deg); }
+            66% { transform: scale(0.96, 1.07) skewX(-1deg); }
+            100% { transform: scale(1.02, 0.98) skewX(1.5deg); }
+        }
+
+        .vapor-trail {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .vapor-trail.active {
+            animation: vaporDissipate 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @keyframes vaporDissipate {
+            0% { opacity: 0.8; transform: translateY(0) scale(0.7); }
+            100% { opacity: 0; transform: translateY(-38px) scale(1.7); }
+        }
+
+        /* Floating Telemetry Signal Nodes (Packet Interceptor) */
+        .telemetry-node {
+            position: fixed;
+            bottom: -110px;
+            z-index: 40;
+            cursor: crosshair;
+            user-select: none;
+            animation: nodeAscend linear forwards;
+            transition: transform 0.12s ease;
+        }
+        .telemetry-node:hover {
+            transform: scale(1.12);
+        }
+        @keyframes nodeAscend {
+            0% { transform: translateY(0) translateX(0); }
+            25% { transform: translateY(-30vh) translateX(14px); }
+            50% { transform: translateY(-60vh) translateX(-14px); }
+            75% { transform: translateY(-90vh) translateX(10px); }
+            100% { transform: translateY(-122vh) translateX(0); }
+        }
+
+        /* Decoded Telemetry Toast */
+        .telemetry-toast {
+            animation: logPop 2.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @keyframes logPop {
+            0% { opacity: 0; transform: translate(-50%, 8px) scale(0.92); }
+            12% { opacity: 1; transform: translate(-50%, -10px) scale(1); }
+            82% { opacity: 1; transform: translate(-50%, -18px) scale(1); }
+            100% { opacity: 0; transform: translate(-50%, -32px) scale(0.95); }
+        }
+
+        /* Scanline subtle shimmer */
+        .scan-overlay {
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0, 0, 0, 0.14),
+                rgba(0, 0, 0, 0.14) 1px,
+                transparent 1px,
+                transparent 3px
+            );
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #090a0f;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #232838;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #38415a;
+        }
+    </style>
+<style>*, ::before, ::after{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }::backdrop{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }/* ! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com */*,::after,::before{box-sizing:border-box;border-width:0;border-style:solid;border-color:#e5e7eb}::after,::before{--tw-content:''}:host,html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;tab-size:4;font-family:Inter, sans-serif;font-feature-settings:normal;font-variation-settings:normal;-webkit-tap-highlight-color:transparent}body{margin:0;line-height:inherit}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,pre,samp{font-family:JetBrains Mono, monospace;font-feature-settings:normal;font-variation-settings:normal;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}button,input,optgroup,select,textarea{font-family:inherit;font-feature-settings:inherit;font-variation-settings:inherit;font-size:100%;font-weight:inherit;line-height:inherit;letter-spacing:inherit;color:inherit;margin:0;padding:0}button,select{text-transform:none}button,input:where([type=button]),input:where([type=reset]),input:where([type=submit]){-webkit-appearance:button;background-color:transparent;background-image:none}:-moz-focusring{outline:auto}:-moz-ui-invalid{box-shadow:none}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}blockquote,dd,dl,figure,h1,h2,h3,h4,h5,h6,hr,p,pre{margin:0}fieldset{margin:0;padding:0}legend{padding:0}menu,ol,ul{list-style:none;margin:0;padding:0}dialog{padding:0}textarea{resize:vertical}input::placeholder,textarea::placeholder{opacity:1;color:#9ca3af}[role=button],button{cursor:pointer}:disabled{cursor:default}audio,canvas,embed,iframe,img,object,svg,video{display:block;vertical-align:middle}img,video{max-width:100%;height:auto}[hidden]:where(:not([hidden=until-found])){display:none}.pointer-events-none{pointer-events:none}.pointer-events-auto{pointer-events:auto}.fixed{position:fixed}.absolute{position:absolute}.relative{position:relative}.sticky{position:sticky}.inset-0{inset:0px}.bottom-2\.5{bottom:0.625rem}.left-2\.5{left:0.625rem}.right-2\.5{right:0.625rem}.top-0{top:0px}.top-2\.5{top:0.625rem}.bottom-2{bottom:0.5rem}.left-2{left:0.5rem}.right-2{right:0.5rem}.top-2{top:0.5rem}.z-10{z-index:10}.z-30{z-index:30}.z-40{z-index:40}.z-50{z-index:50}.z-20{z-index:20}.col-span-2{grid-column:span 2 / span 2}.mx-auto{margin-left:auto;margin-right:auto}.my-auto{margin-top:auto;margin-bottom:auto}.mb-1\.5{margin-bottom:0.375rem}.mb-2{margin-bottom:0.5rem}.mb-6{margin-bottom:1.5rem}.mt-0\.5{margin-top:0.125rem}.mt-1{margin-top:0.25rem}.mb-2\.5{margin-bottom:0.625rem}.mt-2\.5{margin-top:0.625rem}.mt-3{margin-top:0.75rem}.block{display:block}.flex{display:flex}.grid{display:grid}.hidden{display:none}.aspect-\[4\/3\]{aspect-ratio:4/3}.h-2{height:0.5rem}.h-3{height:0.75rem}.h-3\.5{height:0.875rem}.h-32{height:8rem}.h-4{height:1rem}.h-auto{height:auto}.h-full{height:100%}.h-11{height:2.75rem}.h-2\.5{height:0.625rem}.h-5{height:1.25rem}.h-52{height:13rem}.h-8{height:2rem}.max-h-\[65vh\]{max-height:65vh}.max-h-\[72vh\]{max-height:72vh}.min-h-screen{min-height:100vh}.w-2{width:0.5rem}.w-3{width:0.75rem}.w-3\.5{width:0.875rem}.w-4{width:1rem}.w-auto{width:auto}.w-full{width:100%}.w-11{width:2.75rem}.w-2\.5{width:0.625rem}.w-5{width:1.25rem}.w-8{width:2rem}.max-w-3xl{max-width:48rem}.max-w-7xl{max-width:80rem}.max-w-lg{max-width:32rem}.flex-1{flex:1 1 0%}.shrink-0{flex-shrink:0}@keyframes pulse{50%{opacity:.5}}.animate-pulse{animation:pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite}.cursor-pointer{cursor:pointer}.cursor-text{cursor:text}.select-none{-webkit-user-select:none;user-select:none}.grid-cols-1{grid-template-columns:repeat(1, minmax(0, 1fr))}.grid-cols-2{grid-template-columns:repeat(2, minmax(0, 1fr))}.flex-col{flex-direction:column}.flex-wrap{flex-wrap:wrap}.items-start{align-items:flex-start}.items-center{align-items:center}.items-baseline{align-items:baseline}.justify-center{justify-content:center}.justify-between{justify-content:space-between}.gap-1{gap:0.25rem}.gap-1\.5{gap:0.375rem}.gap-2{gap:0.5rem}.gap-3{gap:0.75rem}.gap-5{gap:1.25rem}.gap-6{gap:1.5rem}.gap-8{gap:2rem}.space-y-10 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(2.5rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(2.5rem * var(--tw-space-y-reverse))}.space-y-3 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.75rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.75rem * var(--tw-space-y-reverse))}.space-y-4 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(1rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(1rem * var(--tw-space-y-reverse))}.space-y-5 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(1.25rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(1.25rem * var(--tw-space-y-reverse))}.space-y-6 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(1.5rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(1.5rem * var(--tw-space-y-reverse))}.self-start{align-self:flex-start}.overflow-hidden{overflow:hidden}.overflow-visible{overflow:visible}.whitespace-nowrap{white-space:nowrap}.rounded{border-radius:0.25rem}.rounded-full{border-radius:9999px}.rounded-lg{border-radius:0.5rem}.rounded-xl{border-radius:0.75rem}.border{border-width:1px}.border-b{border-bottom-width:1px}.border-b-2{border-bottom-width:2px}.border-l-2{border-left-width:2px}.border-r-2{border-right-width:2px}.border-t{border-top-width:1px}.border-t-2{border-top-width:2px}.border-l{border-left-width:1px}.border-r{border-right-width:1px}.border-dashed{border-style:dashed}.border-amber-500\/30{border-color:rgb(245 158 11 / 0.3)}.border-cyan-500\/30{border-color:rgb(6 182 212 / 0.3)}.border-cyan-500\/40{border-color:rgb(6 182 212 / 0.4)}.border-cyan-500\/60{border-color:rgb(6 182 212 / 0.6)}.border-emerald-500\/40{border-color:rgb(16 185 129 / 0.4)}.border-hairline{--tw-border-opacity:1;border-color:rgb(35 40 56 / var(--tw-border-opacity, 1))}.border-cyan-400\/60{border-color:rgb(34 211 238 / 0.6)}.border-slate-700{--tw-border-opacity:1;border-color:rgb(51 65 85 / var(--tw-border-opacity, 1))}.border-cyan-500\/50{border-color:rgb(6 182 212 / 0.5)}.bg-\[\#06070a\]{--tw-bg-opacity:1;background-color:rgb(6 7 10 / var(--tw-bg-opacity, 1))}.bg-\[\#090a0f\]{--tw-bg-opacity:1;background-color:rgb(9 10 15 / var(--tw-bg-opacity, 1))}.bg-\[\#090a0f\]\/80{background-color:rgb(9 10 15 / 0.8)}.bg-\[\#090a0f\]\/90{background-color:rgb(9 10 15 / 0.9)}.bg-\[\#ff5e1a\]{--tw-bg-opacity:1;background-color:rgb(255 94 26 / var(--tw-bg-opacity, 1))}.bg-amber-500\/10{background-color:rgb(245 158 11 / 0.1)}.bg-black\/85{background-color:rgb(0 0 0 / 0.85)}.bg-cyan-400{--tw-bg-opacity:1;background-color:rgb(34 211 238 / var(--tw-bg-opacity, 1))}.bg-cyan-500\/10{background-color:rgb(6 182 212 / 0.1)}.bg-emerald-400{--tw-bg-opacity:1;background-color:rgb(52 211 153 / var(--tw-bg-opacity, 1))}.bg-emerald-500\/15{background-color:rgb(16 185 129 / 0.15)}.bg-slate-600{--tw-bg-opacity:1;background-color:rgb(71 85 105 / var(--tw-bg-opacity, 1))}.bg-surface{--tw-bg-opacity:1;background-color:rgb(21 24 34 / var(--tw-bg-opacity, 1))}.bg-\[\#0d1017\]{--tw-bg-opacity:1;background-color:rgb(13 16 23 / var(--tw-bg-opacity, 1))}.bg-\[\#090a0f\]\/95{background-color:rgb(9 10 15 / 0.95)}.bg-gradient-to-r{background-image:linear-gradient(to right, var(--tw-gradient-stops))}.from-\[\#ff5e1a\]{--tw-gradient-from:#ff5e1a var(--tw-gradient-from-position);--tw-gradient-to:rgb(255 94 26 / 0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), var(--tw-gradient-to)}.via-amber-400{--tw-gradient-to:rgb(251 191 36 / 0)  var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), #fbbf24 var(--tw-gradient-via-position), var(--tw-gradient-to)}.to-cyan-400{--tw-gradient-to:#22d3ee var(--tw-gradient-to-position)}.bg-clip-text{-webkit-background-clip:text;background-clip:text}.object-contain{object-fit:contain}.object-cover{object-fit:cover}.p-3\.5{padding:0.875rem}.p-4{padding:1rem}.p-6{padding:1.5rem}.p-5{padding:1.25rem}.px-2{padding-left:0.5rem;padding-right:0.5rem}.px-2\.5{padding-left:0.625rem;padding-right:0.625rem}.px-3{padding-left:0.75rem;padding-right:0.75rem}.px-4{padding-left:1rem;padding-right:1rem}.py-0\.5{padding-top:0.125rem;padding-bottom:0.125rem}.py-1{padding-top:0.25rem;padding-bottom:0.25rem}.py-1\.5{padding-top:0.375rem;padding-bottom:0.375rem}.py-2\.5{padding-top:0.625rem;padding-bottom:0.625rem}.py-3{padding-top:0.75rem;padding-bottom:0.75rem}.py-6{padding-top:1.5rem;padding-bottom:1.5rem}.py-8{padding-top:2rem;padding-bottom:2rem}.px-1\.5{padding-left:0.375rem;padding-right:0.375rem}.py-2{padding-top:0.5rem;padding-bottom:0.5rem}.px-3\.5{padding-left:0.875rem;padding-right:0.875rem}.pb-1{padding-bottom:0.25rem}.pb-2{padding-bottom:0.5rem}.pb-4{padding-bottom:1rem}.pb-6{padding-bottom:1.5rem}.pt-2{padding-top:0.5rem}.pt-2\.5{padding-top:0.625rem}.text-left{text-align:left}.text-center{text-align:center}.font-mono{font-family:JetBrains Mono, monospace}.text-3xl{font-size:1.875rem;line-height:2.25rem}.text-\[11px\]{font-size:11px}.text-sm{font-size:0.875rem;line-height:1.25rem}.text-xl{font-size:1.25rem;line-height:1.75rem}.text-xs{font-size:0.75rem;line-height:1rem}.text-\[10px\]{font-size:10px}.font-bold{font-weight:700}.font-medium{font-weight:500}.font-normal{font-weight:400}.font-semibold{font-weight:600}.uppercase{text-transform:uppercase}.leading-relaxed{line-height:1.625}.leading-tight{line-height:1.25}.leading-snug{line-height:1.375}.tracking-tight{letter-spacing:-0.025em}.tracking-wider{letter-spacing:0.05em}.text-\[\#ff5e1a\]{--tw-text-opacity:1;color:rgb(255 94 26 / var(--tw-text-opacity, 1))}.text-amber-400{--tw-text-opacity:1;color:rgb(251 191 36 / var(--tw-text-opacity, 1))}.text-amber-500{--tw-text-opacity:1;color:rgb(245 158 11 / var(--tw-text-opacity, 1))}.text-cyan-400{--tw-text-opacity:1;color:rgb(34 211 238 / var(--tw-text-opacity, 1))}.text-emerald-300{--tw-text-opacity:1;color:rgb(110 231 183 / var(--tw-text-opacity, 1))}.text-emerald-400{--tw-text-opacity:1;color:rgb(52 211 153 / var(--tw-text-opacity, 1))}.text-slate-100{--tw-text-opacity:1;color:rgb(241 245 249 / var(--tw-text-opacity, 1))}.text-slate-200{--tw-text-opacity:1;color:rgb(226 232 240 / var(--tw-text-opacity, 1))}.text-slate-300{--tw-text-opacity:1;color:rgb(203 213 225 / var(--tw-text-opacity, 1))}.text-slate-400{--tw-text-opacity:1;color:rgb(148 163 184 / var(--tw-text-opacity, 1))}.text-slate-500{--tw-text-opacity:1;color:rgb(100 116 139 / var(--tw-text-opacity, 1))}.text-slate-950{--tw-text-opacity:1;color:rgb(2 6 23 / var(--tw-text-opacity, 1))}.text-transparent{color:transparent}.text-white{--tw-text-opacity:1;color:rgb(255 255 255 / var(--tw-text-opacity, 1))}.text-slate-600{--tw-text-opacity:1;color:rgb(71 85 105 / var(--tw-text-opacity, 1))}.text-cyan-300{--tw-text-opacity:1;color:rgb(103 232 249 / var(--tw-text-opacity, 1))}.underline{-webkit-text-decoration-line:underline;text-decoration-line:underline}.underline-offset-4{text-underline-offset:4px}.antialiased{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}.shadow-2xl{--tw-shadow:0 25px 50px -12px rgb(0 0 0 / 0.25);--tw-shadow-colored:0 25px 50px -12px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-\[0_0_8px_\#10b981\]{--tw-shadow:0 0 8px #10b981;--tw-shadow-colored:0 0 8px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-xl{--tw-shadow:0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);--tw-shadow-colored:0 20px 25px -5px var(--tw-shadow-color), 0 8px 10px -6px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.drop-shadow-\[0_0_10px_rgba\(0\2c 0\2c 0\2c 0\.8\)\]{--tw-drop-shadow:drop-shadow(0 0 10px rgba(0,0,0,0.8));filter:var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow)}.backdrop-blur-md{--tw-backdrop-blur:blur(12px);-webkit-backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia)}.transition{transition-property:color, background-color, border-color, fill, stroke, opacity, box-shadow, transform, filter, -webkit-text-decoration-color, -webkit-backdrop-filter;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter, -webkit-text-decoration-color, -webkit-backdrop-filter;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.selection\:bg-cyan-500\/30 *::selection{background-color:rgb(6 182 212 / 0.3)}.selection\:text-cyan-200 *::selection{--tw-text-opacity:1;color:rgb(165 243 252 / var(--tw-text-opacity, 1))}.selection\:bg-cyan-500\/30::selection{background-color:rgb(6 182 212 / 0.3)}.selection\:text-cyan-200::selection{--tw-text-opacity:1;color:rgb(165 243 252 / var(--tw-text-opacity, 1))}.hover\:border-amber-500\/50:hover{border-color:rgb(245 158 11 / 0.5)}.hover\:border-cyan-500\/50:hover{border-color:rgb(6 182 212 / 0.5)}.hover\:border-cyan-500\/40:hover{border-color:rgb(6 182 212 / 0.4)}.hover\:bg-\[\#1c202e\]:hover{--tw-bg-opacity:1;background-color:rgb(28 32 46 / var(--tw-bg-opacity, 1))}.hover\:bg-\[\#ff7236\]:hover{--tw-bg-opacity:1;background-color:rgb(255 114 54 / var(--tw-bg-opacity, 1))}.hover\:bg-emerald-500\/25:hover{background-color:rgb(16 185 129 / 0.25)}.hover\:bg-rose-500\/20:hover{background-color:rgb(244 63 94 / 0.2)}.hover\:bg-\[\#111420\]:hover{--tw-bg-opacity:1;background-color:rgb(17 20 32 / var(--tw-bg-opacity, 1))}.hover\:bg-\[\#ff5e1a\]:hover{--tw-bg-opacity:1;background-color:rgb(255 94 26 / var(--tw-bg-opacity, 1))}.hover\:bg-cyan-500:hover{--tw-bg-opacity:1;background-color:rgb(6 182 212 / var(--tw-bg-opacity, 1))}.hover\:bg-white\/\[0\.02\]:hover{background-color:rgb(255 255 255 / 0.02)}.hover\:text-cyan-400:hover{--tw-text-opacity:1;color:rgb(34 211 238 / var(--tw-text-opacity, 1))}.hover\:text-rose-300:hover{--tw-text-opacity:1;color:rgb(253 164 175 / var(--tw-text-opacity, 1))}.hover\:text-slate-950:hover{--tw-text-opacity:1;color:rgb(2 6 23 / var(--tw-text-opacity, 1))}.group:hover .group-hover\:border-cyan-400\/60{border-color:rgb(34 211 238 / 0.6)}.group:hover .group-hover\:border-cyan-500\/50{border-color:rgb(6 182 212 / 0.5)}.group:hover .group-hover\:text-cyan-400{--tw-text-opacity:1;color:rgb(34 211 238 / var(--tw-text-opacity, 1))}@media (min-width: 640px){.sm\:grid-cols-2{grid-template-columns:repeat(2, minmax(0, 1fr))}.sm\:flex-row{flex-direction:row}.sm\:items-end{align-items:flex-end}.sm\:self-auto{align-self:auto}.sm\:p-4{padding:1rem}.sm\:p-6{padding:1.5rem}.sm\:p-8{padding:2rem}.sm\:px-6{padding-left:1.5rem;padding-right:1.5rem}.sm\:py-10{padding-top:2.5rem;padding-bottom:2.5rem}.sm\:text-2xl{font-size:1.5rem;line-height:2rem}.sm\:text-5xl{font-size:3rem;line-height:1}.sm\:text-sm{font-size:0.875rem;line-height:1.25rem}}@media (min-width: 768px){.md\:flex{display:flex}.md\:flex-row{flex-direction:row}.md\:items-end{align-items:flex-end}.md\:items-center{align-items:center}.md\:self-center{align-self:center}}@media (min-width: 1024px){.lg\:col-span-1{grid-column:span 1 / span 1}.lg\:col-span-5{grid-column:span 5 / span 5}.lg\:col-span-7{grid-column:span 7 / span 7}.lg\:w-72{width:18rem}.lg\:grid-cols-1{grid-template-columns:repeat(1, minmax(0, 1fr))}.lg\:grid-cols-12{grid-template-columns:repeat(12, minmax(0, 1fr))}.lg\:grid-cols-3{grid-template-columns:repeat(3, minmax(0, 1fr))}.lg\:grid-cols-4{grid-template-columns:repeat(4, minmax(0, 1fr))}.lg\:flex-row{flex-direction:row}.lg\:items-center{align-items:center}}</style></head>
+<body class="min-h-screen antialiased selection:bg-cyan-500/30 selection:text-cyan-200">
+
+    <!-- Floating Telemetry Nodes Container -->
+    <div id="telemetry-sky" class="fixed inset-0 pointer-events-none z-40 overflow-hidden"><div class="telemetry-node pointer-events-auto" title="Click to intercept telemetry packet" style="left: 53.2118%; animation-duration: 10.1401s;">
+                <svg width="68" height="94" viewBox="0 0 68 94" class="drop-shadow-[0_0_10px_rgba(0,0,0,0.8)]">
+                    <!-- Tether line -->
+                    <line x1="34" y1="62" x2="34" y2="90" stroke="#00e5ff" stroke-width="1.2" stroke-dasharray="3 2" opacity="0.7"></line>
+                    <circle cx="34" cy="91" r="2" fill="#00e5ff"></circle>
+                    <!-- Outer Sensor Ring -->
+                    <circle cx="34" cy="32" r="28" fill="#090a0f" fill-opacity="0.88" stroke="#00e5ff" stroke-width="1.5"></circle>
+                    <circle cx="34" cy="32" r="22" fill="none" stroke="#00e5ff" stroke-width="0.75" stroke-dasharray="4 3" opacity="0.65"></circle>
+                    <!-- Crosshair ticks -->
+                    <line x1="34" y1="2" x2="34" y2="8" stroke="#00e5ff" stroke-width="1.5"></line>
+                    <line x1="34" y1="56" x2="34" y2="62" stroke="#00e5ff" stroke-width="1.5"></line>
+                    <line x1="4" y1="32" x2="10" y2="32" stroke="#00e5ff" stroke-width="1.5"></line>
+                    <line x1="58" y1="32" x2="64" y2="32" stroke="#00e5ff" stroke-width="1.5"></line>
+                    <!-- Hex Packet Label -->
+                    <text x="34" y="30" fill="#f8fafc" font-family="JetBrains Mono" font-size="10" font-weight="bold" text-anchor="middle">0xE3</text>
+                    <text x="34" y="41" fill="#00e5ff" font-family="JetBrains Mono" font-size="7" text-anchor="middle">PKT_NODE</text>
+                </svg>
+            </div><div class="telemetry-node pointer-events-auto" title="Click to intercept telemetry packet" style="left: 21.2081%; animation-duration: 13.4993s;">
+                <svg width="68" height="94" viewBox="0 0 68 94" class="drop-shadow-[0_0_10px_rgba(0,0,0,0.8)]">
+                    <!-- Tether line -->
+                    <line x1="34" y1="62" x2="34" y2="90" stroke="#10b981" stroke-width="1.2" stroke-dasharray="3 2" opacity="0.7"></line>
+                    <circle cx="34" cy="91" r="2" fill="#10b981"></circle>
+                    <!-- Outer Sensor Ring -->
+                    <circle cx="34" cy="32" r="28" fill="#090a0f" fill-opacity="0.88" stroke="#10b981" stroke-width="1.5"></circle>
+                    <circle cx="34" cy="32" r="22" fill="none" stroke="#10b981" stroke-width="0.75" stroke-dasharray="4 3" opacity="0.65"></circle>
+                    <!-- Crosshair ticks -->
+                    <line x1="34" y1="2" x2="34" y2="8" stroke="#10b981" stroke-width="1.5"></line>
+                    <line x1="34" y1="56" x2="34" y2="62" stroke="#10b981" stroke-width="1.5"></line>
+                    <line x1="4" y1="32" x2="10" y2="32" stroke="#10b981" stroke-width="1.5"></line>
+                    <line x1="58" y1="32" x2="64" y2="32" stroke="#10b981" stroke-width="1.5"></line>
+                    <!-- Hex Packet Label -->
+                    <text x="34" y="30" fill="#f8fafc" font-family="JetBrains Mono" font-size="10" font-weight="bold" text-anchor="middle">0x24</text>
+                    <text x="34" y="41" fill="#10b981" font-family="JetBrains Mono" font-size="7" text-anchor="middle">PKT_NODE</text>
+                </svg>
+            </div><div class="telemetry-node pointer-events-auto" title="Click to intercept telemetry packet" style="left: 38.6459%; animation-duration: 13.6477s;">
+                <svg width="68" height="94" viewBox="0 0 68 94" class="drop-shadow-[0_0_10px_rgba(0,0,0,0.8)]">
+                    <!-- Tether line -->
+                    <line x1="34" y1="62" x2="34" y2="90" stroke="#10b981" stroke-width="1.2" stroke-dasharray="3 2" opacity="0.7"></line>
+                    <circle cx="34" cy="91" r="2" fill="#10b981"></circle>
+                    <!-- Outer Sensor Ring -->
+                    <circle cx="34" cy="32" r="28" fill="#090a0f" fill-opacity="0.88" stroke="#10b981" stroke-width="1.5"></circle>
+                    <circle cx="34" cy="32" r="22" fill="none" stroke="#10b981" stroke-width="0.75" stroke-dasharray="4 3" opacity="0.65"></circle>
+                    <!-- Crosshair ticks -->
+                    <line x1="34" y1="2" x2="34" y2="8" stroke="#10b981" stroke-width="1.5"></line>
+                    <line x1="34" y1="56" x2="34" y2="62" stroke="#10b981" stroke-width="1.5"></line>
+                    <line x1="4" y1="32" x2="10" y2="32" stroke="#10b981" stroke-width="1.5"></line>
+                    <line x1="58" y1="32" x2="64" y2="32" stroke="#10b981" stroke-width="1.5"></line>
+                    <!-- Hex Packet Label -->
+                    <text x="34" y="30" fill="#f8fafc" font-family="JetBrains Mono" font-size="10" font-weight="bold" text-anchor="middle">0x9D</text>
+                    <text x="34" y="41" fill="#10b981" font-family="JetBrains Mono" font-size="7" text-anchor="middle">PKT_NODE</text>
+                </svg>
+            </div></div>
+
+    <!-- Decoded Packet Toast Layer -->
+    <div id="toast-layer" class="fixed inset-0 pointer-events-none z-50"></div>
+
+    <!-- 1. TOP TELEMETRY STATUS BAR -->
+    <header class="sticky top-0 z-30 bg-[#090a0f]/90 backdrop-blur-md border-b border-hairline">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-3">
+            <!-- Left System Identifier -->
+            <div class="flex items-center gap-3">
+                <div class="flex items-center gap-2 px-2.5 py-1 rounded bg-surface border border-hairline">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_#10b981]"></span>
+                    <span class="font-mono text-xs sm:text-sm font-bold tracking-wider text-slate-100">
+                        BDAY_OS <span class="text-cyan-400">//</span> v2.0.26
+                    </span>
+                </div>
+                <div class="hidden md:flex items-center gap-2 font-mono text-xs text-slate-400">
+                    <span>SYS_CLOCK:</span>
+                    <span id="live-clock" class="text-slate-200 font-medium">16:27:04 UTC</span>
+                </div>
+            </div>
+
+            <!-- Right Controls -->
+            <div class="flex flex-wrap items-center gap-2">
+                <button id="audio-toggle-btn" onclick="toggleSynthMelody()" class="te-btn flex items-center gap-2 px-3 py-1.5 rounded bg-surface hover:bg-[#1c202e] border border-hairline hover:border-cyan-500/50 font-mono text-xs font-medium text-slate-200">
+                    <svg id="audio-icon" class="w-3.5 h-3.5 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                        <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+                    </svg>
+                    <span id="audio-label">SYNTH_AUDIO: PLAY</span>
+                </button>
+
+                <button onclick="spawnTelemetryWave(6)" class="te-btn flex items-center gap-2 px-3 py-1.5 rounded bg-surface hover:bg-[#1c202e] border border-hairline hover:border-amber-500/50 font-mono text-xs font-medium text-slate-200">
+                    <svg class="w-3.5 h-3.5 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"></path>
+                    </svg>
+                    <span>DEPLOY_PACKETS</span>
+                </button>
+
+                <button onclick="fireVectorBurst()" class="te-btn flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#ff5e1a] hover:bg-[#ff7236] text-slate-950 font-mono text-xs font-bold tracking-tight">
+                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                    </svg>
+                    <span>TRIGGER_BURST</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN WORKSPACE -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-10 space-y-10 relative z-10">
+
+        <!-- HERO TELEMETRY HEADER & PATCH NOTES -->
+        <section class="hw-panel rounded-xl p-6 sm:p-8 relative overflow-hidden">
+            <!-- Technical Corner Brackets -->
+            <div class="absolute top-2.5 left-2.5 w-3 h-3 border-t-2 border-l-2 border-cyan-500/60"></div>
+            <div class="absolute top-2.5 right-2.5 w-3 h-3 border-t-2 border-r-2 border-cyan-500/60"></div>
+            <div class="absolute bottom-2.5 left-2.5 w-3 h-3 border-b-2 border-l-2 border-cyan-500/60"></div>
+            <div class="absolute bottom-2.5 right-2.5 w-3 h-3 border-b-2 border-r-2 border-cyan-500/60"></div>
+
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                <div class="space-y-4 max-w-3xl">
+                    <div class="flex flex-wrap items-center gap-2 font-mono text-xs">
+                        <span class="px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">
+                            STATUS: SOLAR_ORBIT_COMPLETE
+                        </span>
+                        <span class="px-2 py-0.5 rounded bg-surface text-slate-400 border border-hairline">
+                            MODE: INLINE_EDIT_ENABLED
+                        </span>
+                    </div>
+
+                    <h1 class="text-3xl sm:text-5xl font-bold tracking-tight text-white leading-tight">
+                        HAPPY BIRTHDAY,
+                        <span id="callsign-field" contenteditable="true" spellcheck="false" title="Click to edit recipient callsign" class="text-transparent bg-clip-text bg-gradient-to-r from-[#ff5e1a] via-amber-400 to-cyan-400 cursor-text">
+                            CHIEF_ENGINEER
+                        </span>
+                    </h1>
+
+                    <div class="bg-[#090a0f]/80 border border-hairline rounded-lg p-3.5 sm:p-4 font-mono text-xs sm:text-sm text-slate-300 leading-relaxed">
+                        <div class="flex items-center justify-between text-[11px] text-slate-500 mb-1.5 border-b border-hairline pb-1">
+                            <span>CHANGELOG // RELEASE_NOTES.MD</span>
+                            <span>[CLICK TEXT TO EDIT]</span>
+                        </div>
+                        <p id="patch-notes-field" contenteditable="true" spellcheck="false" class="cursor-text text-slate-200">
+                            + Upgraded runtime stability by +1 full solar revolution. Zero critical bugs detected. All subsystems nominal: high-output laughter, peak caffeine efficiency, and unlimited cake throughput authorized for the next 365.25 days.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Uptime / Age Telemetry Readout Card -->
+                <div class="lg:w-72 shrink-0 bg-[#090a0f] border border-hairline rounded-lg p-4 font-mono space-y-3">
+                    <div class="flex items-center justify-between text-xs text-slate-400 border-b border-hairline pb-2">
+                        <span>TELEMETRY_METRICS</span>
+                        <span class="text-emerald-400">NOMINAL</span>
+                    </div>
+                    <div class="grid grid-cols-2 lg:grid-cols-1 gap-3">
+                        <div>
+                            <div class="text-[11px] text-slate-500">SOLAR_CYCLE_REV</div>
+                            <div class="text-xl font-bold text-white flex items-baseline gap-1">
+                                <span>LVL_</span>
+                                <span id="age-counter" contenteditable="true" spellcheck="false" class="text-[#ff5e1a] cursor-text">25</span>
+                                <span class="text-xs text-slate-500 font-normal">.0.0</span>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="text-[11px] text-slate-500">UPTIME_SESSION</div>
+                            <div id="session-uptime" class="text-sm font-semibold text-cyan-400">00d 00h 00m 23s</div>
+                        </div>
+                        <div class="col-span-2 lg:col-span-1">
+                            <div class="text-[11px] text-slate-500">PACKETS_INTERCEPTED</div>
+                            <div class="flex items-center justify-between">
+                                <span id="packet-score" class="text-sm font-semibold text-emerald-400">01</span>
+                                <span class="text-[11px] text-slate-500">NODES</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. INTERACTIVE PCB / LOGIC-GATE BIRTHDAY CAKE & OSCILLOSCOPE MODULE -->
+        <section class="hw-panel rounded-xl p-6 sm:p-8">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 pb-6 mb-6 border-b border-hairline">
+                <div>
+                    <div class="font-mono text-xs text-cyan-400 tracking-wider uppercase">SUBSYSTEM_01 // THERMAL_IGNITION_ARRAY</div>
+                    <h2 class="text-xl sm:text-2xl font-bold text-white mt-0.5">PCB Multi-Tier Cake Schematic &amp; Acoustic Sensor</h2>
+                </div>
+                <div id="ignition-status-badge" class="self-start md:self-center px-3 py-1 rounded bg-amber-500/10 border border-amber-500/30 font-mono text-xs text-amber-400">
+                    STATE: 5 / 5 PLASMA_CELLS_ACTIVE
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                <!-- Left/Center: Precision Hardware Cake Schematic -->
+                <div class="lg:col-span-7 bg-[#090a0f] border border-hairline rounded-xl p-4 sm:p-6 relative flex flex-col items-center justify-center">
+                    <div class="w-full flex items-center justify-between font-mono text-[11px] text-slate-500 mb-2">
+                        <span>CAD_VIEW: FRONT_ELEVATION</span>
+                        <span>SCALE: 1:1.0</span>
+                    </div>
+
+                    <svg id="pcb-cake-svg" viewBox="0 0 460 320" class="w-full max-w-lg h-auto select-none overflow-visible">
+                        <defs>
+                            <linearGradient id="chassisBase" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stop-color="#111521"></stop>
+                                <stop offset="50%" stop-color="#1e2436"></stop>
+                                <stop offset="100%" stop-color="#111521"></stop>
+                            </linearGradient>
+                            <linearGradient id="tierOneGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" stop-color="#1b2234"></stop>
+                                <stop offset="100%" stop-color="#121622"></stop>
+                            </linearGradient>
+                            <linearGradient id="tierTwoGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" stop-color="#222b42"></stop>
+                                <stop offset="100%" stop-color="#151b2b"></stop>
+                            </linearGradient>
+                            <linearGradient id="tierThreeGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" stop-color="#29344f"></stop>
+                                <stop offset="100%" stop-color="#192033"></stop>
+                            </linearGradient>
+                            <radialGradient id="plasmaGrad" cx="50%" cy="72%" r="55%">
+                                <stop offset="0%" stop-color="#ffffff"></stop>
+                                <stop offset="35%" stop-color="#00e5ff"></stop>
+                                <stop offset="75%" stop-color="#ff5e1a"></stop>
+                                <stop offset="100%" stop-color="#ff5e1a" stop-opacity="0"></stop>
+                            </radialGradient>
+                        </defs>
+
+                        <!-- Dimension Lines -->
+                        <g stroke="#334155" stroke-width="1" stroke-dasharray="3 3">
+                            <line x1="55" y1="285" x2="55" y2="95"></line>
+                            <line x1="48" y1="285" x2="62" y2="285"></line>
+                            <line x1="48" y1="95" x2="62" y2="95"></line>
+                        </g>
+                        <text x="44" y="195" fill="#64748b" font-family="JetBrains Mono" font-size="9" transform="rotate(-90 44 195)" text-anchor="middle">H: 190mm</text>
+
+                        <!-- Base Heatsink Platter -->
+                        <rect x="65" y="276" width="330" height="14" rx="3" fill="url(#chassisBase)" stroke="#38415a" stroke-width="1.5"></rect>
+                        <line x1="80" y1="283" x2="380" y2="283" stroke="#00e5ff" stroke-width="1" stroke-opacity="0.4"></line>
+
+                        <!-- TIER 1 (Bottom PCB Module) -->
+                        <rect x="90" y="216" width="280" height="60" rx="4" fill="url(#tierOneGrad)" stroke="#3b4664" stroke-width="1.5"></rect>
+                        <!-- PCB Copper Traces & SMD Pads -->
+                        <path d="M 105 246 L 145 246 L 155 234 L 210 234" fill="none" stroke="#00e5ff" stroke-width="1.2" stroke-opacity="0.55"></path>
+                        <path d="M 355 246 L 315 246 L 305 258 L 250 258" fill="none" stroke="#ff5e1a" stroke-width="1.2" stroke-opacity="0.65"></path>
+                        <circle cx="145" cy="246" r="2.5" fill="#00e5ff"></circle>
+                        <circle cx="210" cy="234" r="2.5" fill="#00e5ff"></circle>
+                        <circle cx="315" cy="246" r="2.5" fill="#ff5e1a"></circle>
+                        <circle cx="250" cy="258" r="2.5" fill="#ff5e1a"></circle>
+                        <!-- Tier 1 Status LEDs -->
+                        <g fill="#10b981">
+                            <rect x="108" y="264" width="8" height="3" rx="1"></rect>
+                            <rect x="122" y="264" width="8" height="3" rx="1"></rect>
+                            <rect x="136" y="264" width="8" height="3" rx="1"></rect>
+                        </g>
+                        <text x="358" y="268" fill="#64748b" font-family="JetBrains Mono" font-size="8" text-anchor="end">BUS_A // 12V</text>
+
+                        <!-- TIER 2 (Middle Logic Module) -->
+                        <rect x="120" y="160" width="220" height="56" rx="4" fill="url(#tierTwoGrad)" stroke="#475577" stroke-width="1.5"></rect>
+                        <!-- Logic Gate Silkscreen -->
+                        <path d="M 140 188 L 180 188 L 190 176 L 270 176 L 280 188 L 320 188" fill="none" stroke="#8b5cf6" stroke-width="1.2" stroke-opacity="0.7"></path>
+                        <rect x="206" y="169" width="48" height="14" rx="2" fill="#0f1118" stroke="#8b5cf6" stroke-width="1"></rect>
+                        <text x="230" y="179" fill="#c4b5fd" font-family="JetBrains Mono" font-size="8" text-anchor="middle">MCU_CORE</text>
+                        <text x="328" y="208" fill="#64748b" font-family="JetBrains Mono" font-size="8" text-anchor="end">BUS_B // 5V</text>
+
+                        <!-- TIER 3 (Top Emitter Array) -->
+                        <rect x="150" y="110" width="160" height="50" rx="4" fill="url(#tierThreeGrad)" stroke="#00e5ff" stroke-opacity="0.55" stroke-width="1.5"></rect>
+                        <line x1="150" y1="122" x2="310" y2="122" stroke="#00e5ff" stroke-width="1" stroke-opacity="0.35"></line>
+                        <text x="230" y="142" fill="#e2e8f0" font-family="JetBrains Mono" font-size="9" font-weight="bold" text-anchor="middle" letter-spacing="1.5">BDAY_ARRAY_05</text>
+
+                        <!-- 5 INTERACTIVE PLASMA / LED EMITTER CANDLES -->
+                        <g id="emitter-candles">
+                            <!-- Emitter 0 -->
+                            <g class="cursor-pointer group" onclick="extinguishEmitter(0)">
+                                <rect x="166" y="74" width="10" height="36" rx="1.5" fill="#1e293b" stroke="#64748b" stroke-width="1.2"></rect>
+                                <line x1="166" y1="84" x2="176" y2="84" stroke="#00e5ff" stroke-width="1.5"></line>
+                                <line x1="166" y1="96" x2="176" y2="96" stroke="#00e5ff" stroke-width="1.5"></line>
+                                <line x1="171" y1="68" x2="171" y2="74" stroke="#94a3b8" stroke-width="2"></line>
+                                <circle id="vapor-0" class="vapor-trail" cx="171" cy="60" r="5" fill="#94a3b8"></circle>
+                                <path id="plasma-0" class="plasma-flame" d="M 171 42 C 178 53, 178 65, 171 68 C 164 65, 164 53, 171 42 Z" fill="url(#plasmaGrad)"></path>
+                            </g>
+
+                            <!-- Emitter 1 -->
+                            <g class="cursor-pointer group" onclick="extinguishEmitter(1)">
+                                <rect x="195" y="70" width="10" height="40" rx="1.5" fill="#1e293b" stroke="#64748b" stroke-width="1.2"></rect>
+                                <line x1="195" y1="80" x2="205" y2="80" stroke="#ff5e1a" stroke-width="1.5"></line>
+                                <line x1="195" y1="92" x2="205" y2="92" stroke="#ff5e1a" stroke-width="1.5"></line>
+                                <line x1="200" y1="64" x2="200" y2="70" stroke="#94a3b8" stroke-width="2"></line>
+                                <circle id="vapor-1" class="vapor-trail" cx="200" cy="56" r="5" fill="#94a3b8"></circle>
+                                <path id="plasma-1" class="plasma-flame" d="M 200 38 C 207 49, 207 61, 200 64 C 193 61, 193 49, 200 38 Z" fill="url(#plasmaGrad)"></path>
+                            </g>
+
+                            <!-- Emitter 2 (Center) -->
+                            <g class="cursor-pointer group" onclick="extinguishEmitter(2)">
+                                <rect x="225" y="66" width="10" height="44" rx="1.5" fill="#1e293b" stroke="#00e5ff" stroke-width="1.2"></rect>
+                                <line x1="225" y1="77" x2="235" y2="77" stroke="#00e5ff" stroke-width="1.5"></line>
+                                <line x1="225" y1="89" x2="235" y2="89" stroke="#00e5ff" stroke-width="1.5"></line>
+                                <line x1="230" y1="60" x2="230" y2="66" stroke="#94a3b8" stroke-width="2"></line>
+                                <circle id="vapor-2" class="vapor-trail" cx="230" cy="52" r="5" fill="#94a3b8"></circle>
+                                <path id="plasma-2" class="plasma-flame" d="M 230 34 C 237 45, 237 57, 230 60 C 223 57, 223 45, 230 34 Z" fill="url(#plasmaGrad)"></path>
+                            </g>
+
+                            <!-- Emitter 3 -->
+                            <g class="cursor-pointer group" onclick="extinguishEmitter(3)">
+                                <rect x="255" y="70" width="10" height="40" rx="1.5" fill="#1e293b" stroke="#64748b" stroke-width="1.2"></rect>
+                                <line x1="255" y1="80" x2="265" y2="80" stroke="#ff5e1a" stroke-width="1.5"></line>
+                                <line x1="255" y1="92" x2="265" y2="92" stroke="#ff5e1a" stroke-width="1.5"></line>
+                                <line x1="260" y1="64" x2="260" y2="70" stroke="#94a3b8" stroke-width="2"></line>
+                                <circle id="vapor-3" class="vapor-trail" cx="260" cy="56" r="5" fill="#94a3b8"></circle>
+                                <path id="plasma-3" class="plasma-flame" d="M 260 38 C 267 49, 267 61, 260 64 C 253 61, 253 49, 260 38 Z" fill="url(#plasmaGrad)"></path>
+                            </g>
+
+                            <!-- Emitter 4 -->
+                            <g class="cursor-pointer group" onclick="extinguishEmitter(4)">
+                                <rect x="284" y="74" width="10" height="36" rx="1.5" fill="#1e293b" stroke="#64748b" stroke-width="1.2"></rect>
+                                <line x1="284" y1="84" x2="294" y2="84" stroke="#00e5ff" stroke-width="1.5"></line>
+                                <line x1="284" y1="96" x2="294" y2="96" stroke="#00e5ff" stroke-width="1.5"></line>
+                                <line x1="289" y1="68" x2="289" y2="74" stroke="#94a3b8" stroke-width="2"></line>
+                                <circle id="vapor-4" class="vapor-trail" cx="289" cy="60" r="5" fill="#94a3b8"></circle>
+                                <path id="plasma-4" class="plasma-flame" d="M 289 42 C 296 53, 296 65, 289 68 C 282 65, 282 53, 289 42 Z" fill="url(#plasmaGrad)"></path>
+                            </g>
+                        </g>
+                    </svg>
+
+                    <div class="font-mono text-[11px] text-slate-400 mt-1 text-center">
+                        [INTERACTION]: Click individual plasma emitters above, engage purge switch, or blow into mic sensor.
+                    </div>
+                </div>
+
+                <!-- Right: Live Oscilloscope & Tactile Controls -->
+                <div class="lg:col-span-5 space-y-5">
+                    <!-- Oscilloscope Monitor -->
+                    <div class="bg-[#090a0f] border border-hairline rounded-xl p-4 space-y-3">
+                        <div class="flex items-center justify-between font-mono text-xs">
+                            <span class="text-slate-300 font-semibold flex items-center gap-2">
+                                <span id="scope-led" class="w-2 h-2 rounded-full bg-slate-600"></span>
+                                ACOUSTIC_OSCILLOSCOPE
+                            </span>
+                            <span id="db-readout" class="text-cyan-400">INPUT: STANDBY</span>
+                        </div>
+
+                        <div class="relative h-32 w-full rounded-lg bg-[#06070a] border border-hairline overflow-hidden">
+                            <canvas id="oscilloscope-canvas" class="w-full h-full block" width="550" height="126"></canvas>
+                            <div class="scan-overlay absolute inset-0 pointer-events-none"></div>
+                        </div>
+
+                        <div class="flex items-center justify-between font-mono text-[11px] text-slate-500">
+                            <span>THRESHOLD: 82 dB_SPL</span>
+                            <span>CH1: MIC_TRANSDUCER</span>
+                        </div>
+                    </div>
+
+                    <!-- Tactile Control Deck -->
+                    <div class="bg-[#090a0f] border border-hairline rounded-xl p-4 space-y-3">
+                        <div class="font-mono text-xs text-slate-400 uppercase tracking-wider">
+                            ACTUATOR_CONTROLS
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3">
+                            <button id="purge-all-btn" onclick="purgeAllEmitters()" class="te-btn w-full py-3 px-4 rounded-lg bg-[#ff5e1a] hover:bg-[#ff7236] text-slate-950 font-mono text-xs sm:text-sm font-bold flex items-center justify-between">
+                                <span>PURGE_ALL // BLOW_OUT</span>
+                                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2"></path>
+                                    <path d="M9.6 4.6A2 2 0 1 1 11 8H2"></path>
+                                    <path d="M12.6 19.4A2 2 0 1 0 14 16H2"></path>
+                                </svg>
+                            </button>
+
+                            <button id="mic-sensor-btn" onclick="toggleMicOscilloscope()" class="te-btn w-full py-3 px-4 rounded-lg bg-surface hover:bg-[#1c202e] border border-hairline hover:border-cyan-500/50 text-cyan-400 font-mono text-xs sm:text-sm font-semibold flex items-center justify-between">
+                                <span id="mic-sensor-label">ARM_MIC_SENSOR</span>
+                                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                                    <line x1="12" y1="19" x2="12" y2="23"></line>
+                                    <line x1="8" y1="23" x2="16" y2="23"></line>
+                                </svg>
+                            </button>
+
+                            <button id="reignite-btn" onclick="reigniteEmitters()" class="hidden te-btn w-full py-3 px-4 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 text-emerald-300 font-mono text-xs sm:text-sm font-bold flex items-center justify-between">
+                                <span>RE_IGNITE_CELLS</span>
+                                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="23 4 23 10 17 10"></polyline>
+                                    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. 6-PHOTO TECHNICAL SPECIMEN / MEMORY ARCHIVE GRID -->
+        <section class="hw-panel rounded-xl p-6 sm:p-8 space-y-6">
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-2 pb-4 border-b border-hairline">
+                <div>
+                    <div class="font-mono text-xs text-cyan-400 tracking-wider uppercase">SUBSYSTEM_02 // VISUAL_ARCHIVE_BUFFER</div>
+                    <h2 class="text-xl sm:text-2xl font-bold text-white mt-0.5">6-Slot Specimen Memory Matrix</h2>
+                </div>
+                <p class="font-mono text-xs text-slate-400">
+                    Click or drag-and-drop image files into any slot. Edit metadata tags inline.
+                </p>
+            </div>
+
+            <!-- 6-Slot Responsive Grid -->
+            <div id="specimen-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="bg-[#090a0f] border border-hairline hover:border-cyan-500/40 rounded-lg p-3.5 flex flex-col justify-between transition group relative" ondragover="event.preventDefault(); this.classList.add('border-cyan-400');" ondragleave="this.classList.remove('border-cyan-400');" ondrop="handleSpecimenDrop(event, 0)">
+
+                    <!-- Top Registration Bar -->
+                    <div class="flex items-center justify-between font-mono text-[11px] text-slate-400 mb-2.5">
+                        <span class="text-cyan-400 font-semibold">MEM_SLOT_01</span>
+                        <span id="slot-ts-0" contenteditable="true" spellcheck="false" class="text-slate-500 cursor-text">2026.01.14 // 19:42</span>
+                    </div>
+
+                    <!-- Hidden File Input -->
+                    <input type="file" id="specimen-file-0" accept="image/*" class="hidden" onchange="handleSpecimenFile(event, 0)">
+
+                    <!-- Image Viewport with CAD Crosshairs -->
+                    <div class="relative aspect-[4/3] w-full rounded bg-[#0d1017] border border-dashed border-slate-700 group-hover:border-cyan-500/50 overflow-hidden flex items-center justify-center">
+                        <!-- Registration Corner Crosshairs -->
+                        <div class="absolute top-2 left-2 w-2.5 h-2.5 border-t border-l border-cyan-400/60 pointer-events-none z-10"></div>
+                        <div class="absolute top-2 right-2 w-2.5 h-2.5 border-t border-r border-cyan-400/60 pointer-events-none z-10"></div>
+                        <div class="absolute bottom-2 left-2 w-2.5 h-2.5 border-b border-l border-cyan-400/60 pointer-events-none z-10"></div>
+                        <div class="absolute bottom-2 right-2 w-2.5 h-2.5 border-b border-r border-cyan-400/60 pointer-events-none z-10"></div>
+
+                        <!-- Empty State Prompt -->
+                        <div id="slot-empty-0" onclick="document.getElementById('specimen-file-0').click()" class="w-full h-full flex flex-col items-center justify-center p-4 text-center cursor-pointer hover:bg-white/[0.02] transition">
+                            <svg class="w-8 h-8 text-slate-600 group-hover:text-cyan-400 transition mb-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                <polyline points="21 15 16 10 5 21"></polyline>
+                            </svg>
+                            <span class="font-mono text-xs text-slate-300 font-medium">LOAD_SPECIMEN_IMG</span>
+                            <span class="font-mono text-[10px] text-slate-500 mt-1">CLICK OR DROP FILE</span>
+                        </div>
+
+                        <!-- Loaded Image -->
+                        <img id="slot-img-0" src="" alt="MEM_SLOT_01" class="hidden w-full h-full object-cover">
+
+                        <!-- Loaded Image Action Controls -->
+                        <div id="slot-actions-0" class="hidden absolute bottom-2 right-2 z-20 flex items-center gap-1.5">
+                            <button onclick="openInspectorModal(0)" title="Inspect full resolution" class="px-2 py-1 rounded bg-[#090a0f]/90 hover:bg-cyan-500 text-slate-200 hover:text-slate-950 border border-hairline font-mono text-[10px] font-bold transition">
+                                INSPECT
+                            </button>
+                            <button onclick="document.getElementById('specimen-file-0').click()" title="Replace image" class="px-2 py-1 rounded bg-[#090a0f]/90 hover:bg-[#ff5e1a] text-slate-200 hover:text-slate-950 border border-hairline font-mono text-[10px] font-bold transition">
+                                SWAP
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Editable Specimen Caption -->
+                    <div class="mt-3 pt-2.5 border-t border-hairline flex items-start gap-2 font-mono text-xs">
+                        <span class="text-slate-600 select-none">&gt;</span>
+                        <p id="slot-cap-0" contenteditable="true" spellcheck="false" class="text-slate-300 leading-snug cursor-text flex-1">
+                            Core team sync &amp; late night debugging
+                        </p>
+                    </div>
+                </div>
+            
+                <div class="bg-[#090a0f] border border-hairline hover:border-cyan-500/40 rounded-lg p-3.5 flex flex-col justify-between transition group relative" ondragover="event.preventDefault(); this.classList.add('border-cyan-400');" ondragleave="this.classList.remove('border-cyan-400');" ondrop="handleSpecimenDrop(event, 1)">
+
+                    <!-- Top Registration Bar -->
+                    <div class="flex items-center justify-between font-mono text-[11px] text-slate-400 mb-2.5">
+                        <span class="text-cyan-400 font-semibold">MEM_SLOT_02</span>
+                        <span id="slot-ts-1" contenteditable="true" spellcheck="false" class="text-slate-500 cursor-text">2026.03.22 // 14:15</span>
+                    </div>
+
+                    <!-- Hidden File Input -->
+                    <input type="file" id="specimen-file-1" accept="image/*" class="hidden" onchange="handleSpecimenFile(event, 1)">
+
+                    <!-- Image Viewport with CAD Crosshairs -->
+                    <div class="relative aspect-[4/3] w-full rounded bg-[#0d1017] border border-dashed border-slate-700 group-hover:border-cyan-500/50 overflow-hidden flex items-center justify-center">
+                        <!-- Registration Corner Crosshairs -->
+                        <div class="absolute top-2 left-2 w-2.5 h-2.5 border-t border-l border-cyan-400/60 pointer-events-none z-10"></div>
+                        <div class="absolute top-2 right-2 w-2.5 h-2.5 border-t border-r border-cyan-400/60 pointer-events-none z-10"></div>
+                        <div class="absolute bottom-2 left-2 w-2.5 h-2.5 border-b border-l border-cyan-400/60 pointer-events-none z-10"></div>
+                        <div class="absolute bottom-2 right-2 w-2.5 h-2.5 border-b border-r border-cyan-400/60 pointer-events-none z-10"></div>
+
+                        <!-- Empty State Prompt -->
+                        <div id="slot-empty-1" onclick="document.getElementById('specimen-file-1').click()" class="w-full h-full flex flex-col items-center justify-center p-4 text-center cursor-pointer hover:bg-white/[0.02] transition">
+                            <svg class="w-8 h-8 text-slate-600 group-hover:text-cyan-400 transition mb-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                <polyline points="21 15 16 10 5 21"></polyline>
+                            </svg>
+                            <span class="font-mono text-xs text-slate-300 font-medium">LOAD_SPECIMEN_IMG</span>
+                            <span class="font-mono text-[10px] text-slate-500 mt-1">CLICK OR DROP FILE</span>
+                        </div>
+
+                        <!-- Loaded Image -->
+                        <img id="slot-img-1" src="" alt="MEM_SLOT_02" class="hidden w-full h-full object-cover">
+
+                        <!-- Loaded Image Action Controls -->
+                        <div id="slot-actions-1" class="hidden absolute bottom-2 right-2 z-20 flex items-center gap-1.5">
+                            <button onclick="openInspectorModal(1)" title="Inspect full resolution" class="px-2 py-1 rounded bg-[#090a0f]/90 hover:bg-cyan-500 text-slate-200 hover:text-slate-950 border border-hairline font-mono text-[10px] font-bold transition">
+                                INSPECT
+                            </button>
+                            <button onclick="document.getElementById('specimen-file-1').click()" title="Replace image" class="px-2 py-1 rounded bg-[#090a0f]/90 hover:bg-[#ff5e1a] text-slate-200 hover:text-slate-950 border border-hairline font-mono text-[10px] font-bold transition">
+                                SWAP
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Editable Specimen Caption -->
+                    <div class="mt-3 pt-2.5 border-t border-hairline flex items-start gap-2 font-mono text-xs">
+                        <span class="text-slate-600 select-none">&gt;</span>
+                        <p id="slot-cap-1" contenteditable="true" spellcheck="false" class="text-slate-300 leading-snug cursor-text flex-1">
+                            Field deployment &amp; offsite expedition
+                        </p>
+                    </div>
+                </div>
+            
+                <div class="bg-[#090a0f] border border-hairline hover:border-cyan-500/40 rounded-lg p-3.5 flex flex-col justify-between transition group relative" ondragover="event.preventDefault(); this.classList.add('border-cyan-400');" ondragleave="this.classList.remove('border-cyan-400');" ondrop="handleSpecimenDrop(event, 2)">
+
+                    <!-- Top Registration Bar -->
+                    <div class="flex items-center justify-between font-mono text-[11px] text-slate-400 mb-2.5">
+                        <span class="text-cyan-400 font-semibold">MEM_SLOT_03</span>
+                        <span id="slot-ts-2" contenteditable="true" spellcheck="false" class="text-slate-500 cursor-text">2026.05.09 // 21:08</span>
+                    </div>
+
+                    <!-- Hidden File Input -->
+                    <input type="file" id="specimen-file-2" accept="image/*" class="hidden" onchange="handleSpecimenFile(event, 2)">
+
+                    <!-- Image Viewport with CAD Crosshairs -->
+                    <div class="relative aspect-[4/3] w-full rounded bg-[#0d1017] border border-dashed border-slate-700 group-hover:border-cyan-500/50 overflow-hidden flex items-center justify-center">
+                        <!-- Registration Corner Crosshairs -->
+                        <div class="absolute top-2 left-2 w-2.5 h-2.5 border-t border-l border-cyan-400/60 pointer-events-none z-10"></div>
+                        <div class="absolute top-2 right-2 w-2.5 h-2.5 border-t border-r border-cyan-400/60 pointer-events-none z-10"></div>
+                        <div class="absolute bottom-2 left-2 w-2.5 h-2.5 border-b border-l border-cyan-400/60 pointer-events-none z-10"></div>
+                        <div class="absolute bottom-2 right-2 w-2.5 h-2.5 border-b border-r border-cyan-400/60 pointer-events-none z-10"></div>
+
+                        <!-- Empty State Prompt -->
+                        <div id="slot-empty-2" onclick="document.getElementById('specimen-file-2').click()" class="w-full h-full flex flex-col items-center justify-center p-4 text-center cursor-pointer hover:bg-white/[0.02] transition">
+                            <svg class="w-8 h-8 text-slate-600 group-hover:text-cyan-400 transition mb-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                <polyline points="21 15 16 10 5 21"></polyline>
+                            </svg>
+                            <span class="font-mono text-xs text-slate-300 font-medium">LOAD_SPECIMEN_IMG</span>
+                            <span class="font-mono text-[10px] text-slate-500 mt-1">CLICK OR DROP FILE</span>
+                        </div>
+
+                        <!-- Loaded Image -->
+                        <img id="slot-img-2" src="" alt="MEM_SLOT_03" class="hidden w-full h-full object-cover">
+
+                        <!-- Loaded Image Action Controls -->
+                        <div id="slot-actions-2" class="hidden absolute bottom-2 right-2 z-20 flex items-center gap-1.5">
+                            <button onclick="openInspectorModal(2)" title="Inspect full resolution" class="px-2 py-1 rounded bg-[#090a0f]/90 hover:bg-cyan-500 text-slate-200 hover:text-slate-950 border border-hairline font-mono text-[10px] font-bold transition">
+                                INSPECT
+                            </button>
+                            <button onclick="document.getElementById('specimen-file-2').click()" title="Replace image" class="px-2 py-1 rounded bg-[#090a0f]/90 hover:bg-[#ff5e1a] text-slate-200 hover:text-slate-950 border border-hairline font-mono text-[10px] font-bold transition">
+                                SWAP
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Editable Specimen Caption -->
+                    <div class="mt-3 pt-2.5 border-t border-hairline flex items-start gap-2 font-mono text-xs">
+                        <span class="text-slate-600 select-none">&gt;</span>
+                        <p id="slot-cap-2" contenteditable="true" spellcheck="false" class="text-slate-300 leading-snug cursor-text flex-1">
+                            Milestone release celebration dinner
+                        </p>
+                    </div>
+                </div>
+            
+                <div class="bg-[#090a0f] border border-hairline hover:border-cyan-500/40 rounded-lg p-3.5 flex flex-col justify-between transition group relative" ondragover="event.preventDefault(); this.classList.add('border-cyan-400');" ondragleave="this.classList.remove('border-cyan-400');" ondrop="handleSpecimenDrop(event, 3)">
+
+                    <!-- Top Registration Bar -->
+                    <div class="flex items-center justify-between font-mono text-[11px] text-slate-400 mb-2.5">
+                        <span class="text-cyan-400 font-semibold">MEM_SLOT_04</span>
+                        <span id="slot-ts-3" contenteditable="true" spellcheck="false" class="text-slate-500 cursor-text">2026.07.19 // 11:30</span>
+                    </div>
+
+                    <!-- Hidden File Input -->
+                    <input type="file" id="specimen-file-3" accept="image/*" class="hidden" onchange="handleSpecimenFile(event, 3)">
+
+                    <!-- Image Viewport with CAD Crosshairs -->
+                    <div class="relative aspect-[4/3] w-full rounded bg-[#0d1017] border border-dashed border-slate-700 group-hover:border-cyan-500/50 overflow-hidden flex items-center justify-center">
+                        <!-- Registration Corner Crosshairs -->
+                        <div class="absolute top-2 left-2 w-2.5 h-2.5 border-t border-l border-cyan-400/60 pointer-events-none z-10"></div>
+                        <div class="absolute top-2 right-2 w-2.5 h-2.5 border-t border-r border-cyan-400/60 pointer-events-none z-10"></div>
+                        <div class="absolute bottom-2 left-2 w-2.5 h-2.5 border-b border-l border-cyan-400/60 pointer-events-none z-10"></div>
+                        <div class="absolute bottom-2 right-2 w-2.5 h-2.5 border-b border-r border-cyan-400/60 pointer-events-none z-10"></div>
+
+                        <!-- Empty State Prompt -->
+                        <div id="slot-empty-3" onclick="document.getElementById('specimen-file-3').click()" class="w-full h-full flex flex-col items-center justify-center p-4 text-center cursor-pointer hover:bg-white/[0.02] transition">
+                            <svg class="w-8 h-8 text-slate-600 group-hover:text-cyan-400 transition mb-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                <polyline points="21 15 16 10 5 21"></polyline>
+                            </svg>
+                            <span class="font-mono text-xs text-slate-300 font-medium">LOAD_SPECIMEN_IMG</span>
+                            <span class="font-mono text-[10px] text-slate-500 mt-1">CLICK OR DROP FILE</span>
+                        </div>
+
+                        <!-- Loaded Image -->
+                        <img id="slot-img-3" src="" alt="MEM_SLOT_04" class="hidden w-full h-full object-cover">
+
+                        <!-- Loaded Image Action Controls -->
+                        <div id="slot-actions-3" class="hidden absolute bottom-2 right-2 z-20 flex items-center gap-1.5">
+                            <button onclick="openInspectorModal(3)" title="Inspect full resolution" class="px-2 py-1 rounded bg-[#090a0f]/90 hover:bg-cyan-500 text-slate-200 hover:text-slate-950 border border-hairline font-mono text-[10px] font-bold transition">
+                                INSPECT
+                            </button>
+                            <button onclick="document.getElementById('specimen-file-3').click()" title="Replace image" class="px-2 py-1 rounded bg-[#090a0f]/90 hover:bg-[#ff5e1a] text-slate-200 hover:text-slate-950 border border-hairline font-mono text-[10px] font-bold transition">
+                                SWAP
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Editable Specimen Caption -->
+                    <div class="mt-3 pt-2.5 border-t border-hairline flex items-start gap-2 font-mono text-xs">
+                        <span class="text-slate-600 select-none">&gt;</span>
+                        <p id="slot-cap-3" contenteditable="true" spellcheck="false" class="text-slate-300 leading-snug cursor-text flex-1">
+                            Weekend hardware build &amp; coffee run
+                        </p>
+                    </div>
+                </div>
+            
+                <div class="bg-[#090a0f] border border-hairline hover:border-cyan-500/40 rounded-lg p-3.5 flex flex-col justify-between transition group relative" ondragover="event.preventDefault(); this.classList.add('border-cyan-400');" ondragleave="this.classList.remove('border-cyan-400');" ondrop="handleSpecimenDrop(event, 4)">
+
+                    <!-- Top Registration Bar -->
+                    <div class="flex items-center justify-between font-mono text-[11px] text-slate-400 mb-2.5">
+                        <span class="text-cyan-400 font-semibold">MEM_SLOT_05</span>
+                        <span id="slot-ts-4" contenteditable="true" spellcheck="false" class="text-slate-500 cursor-text">2026.09.04 // 18:50</span>
+                    </div>
+
+                    <!-- Hidden File Input -->
+                    <input type="file" id="specimen-file-4" accept="image/*" class="hidden" onchange="handleSpecimenFile(event, 4)">
+
+                    <!-- Image Viewport with CAD Crosshairs -->
+                    <div class="relative aspect-[4/3] w-full rounded bg-[#0d1017] border border-dashed border-slate-700 group-hover:border-cyan-500/50 overflow-hidden flex items-center justify-center">
+                        <!-- Registration Corner Crosshairs -->
+                        <div class="absolute top-2 left-2 w-2.5 h-2.5 border-t border-l border-cyan-400/60 pointer-events-none z-10"></div>
+                        <div class="absolute top-2 right-2 w-2.5 h-2.5 border-t border-r border-cyan-400/60 pointer-events-none z-10"></div>
+                        <div class="absolute bottom-2 left-2 w-2.5 h-2.5 border-b border-l border-cyan-400/60 pointer-events-none z-10"></div>
+                        <div class="absolute bottom-2 right-2 w-2.5 h-2.5 border-b border-r border-cyan-400/60 pointer-events-none z-10"></div>
+
+                        <!-- Empty State Prompt -->
+                        <div id="slot-empty-4" onclick="document.getElementById('specimen-file-4').click()" class="w-full h-full flex flex-col items-center justify-center p-4 text-center cursor-pointer hover:bg-white/[0.02] transition">
+                            <svg class="w-8 h-8 text-slate-600 group-hover:text-cyan-400 transition mb-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                <polyline points="21 15 16 10 5 21"></polyline>
+                            </svg>
+                            <span class="font-mono text-xs text-slate-300 font-medium">LOAD_SPECIMEN_IMG</span>
+                            <span class="font-mono text-[10px] text-slate-500 mt-1">CLICK OR DROP FILE</span>
+                        </div>
+
+                        <!-- Loaded Image -->
+                        <img id="slot-img-4" src="" alt="MEM_SLOT_05" class="hidden w-full h-full object-cover">
+
+                        <!-- Loaded Image Action Controls -->
+                        <div id="slot-actions-4" class="hidden absolute bottom-2 right-2 z-20 flex items-center gap-1.5">
+                            <button onclick="openInspectorModal(4)" title="Inspect full resolution" class="px-2 py-1 rounded bg-[#090a0f]/90 hover:bg-cyan-500 text-slate-200 hover:text-slate-950 border border-hairline font-mono text-[10px] font-bold transition">
+                                INSPECT
+                            </button>
+                            <button onclick="document.getElementById('specimen-file-4').click()" title="Replace image" class="px-2 py-1 rounded bg-[#090a0f]/90 hover:bg-[#ff5e1a] text-slate-200 hover:text-slate-950 border border-hairline font-mono text-[10px] font-bold transition">
+                                SWAP
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Editable Specimen Caption -->
+                    <div class="mt-3 pt-2.5 border-t border-hairline flex items-start gap-2 font-mono text-xs">
+                        <span class="text-slate-600 select-none">&gt;</span>
+                        <p id="slot-cap-4" contenteditable="true" spellcheck="false" class="text-slate-300 leading-snug cursor-text flex-1">
+                            Golden hour telemetry capture
+                        </p>
+                    </div>
+                </div>
+            
+                <div class="bg-[#090a0f] border border-hairline hover:border-cyan-500/40 rounded-lg p-3.5 flex flex-col justify-between transition group relative" ondragover="event.preventDefault(); this.classList.add('border-cyan-400');" ondragleave="this.classList.remove('border-cyan-400');" ondrop="handleSpecimenDrop(event, 5)">
+
+                    <!-- Top Registration Bar -->
+                    <div class="flex items-center justify-between font-mono text-[11px] text-slate-400 mb-2.5">
+                        <span class="text-cyan-400 font-semibold">MEM_SLOT_06</span>
+                        <span id="slot-ts-5" contenteditable="true" spellcheck="false" class="text-slate-500 cursor-text">2026.11.18 // 00:00</span>
+                    </div>
+
+                    <!-- Hidden File Input -->
+                    <input type="file" id="specimen-file-5" accept="image/*" class="hidden" onchange="handleSpecimenFile(event, 5)">
+
+                    <!-- Image Viewport with CAD Crosshairs -->
+                    <div class="relative aspect-[4/3] w-full rounded bg-[#0d1017] border border-dashed border-slate-700 group-hover:border-cyan-500/50 overflow-hidden flex items-center justify-center">
+                        <!-- Registration Corner Crosshairs -->
+                        <div class="absolute top-2 left-2 w-2.5 h-2.5 border-t border-l border-cyan-400/60 pointer-events-none z-10"></div>
+                        <div class="absolute top-2 right-2 w-2.5 h-2.5 border-t border-r border-cyan-400/60 pointer-events-none z-10"></div>
+                        <div class="absolute bottom-2 left-2 w-2.5 h-2.5 border-b border-l border-cyan-400/60 pointer-events-none z-10"></div>
+                        <div class="absolute bottom-2 right-2 w-2.5 h-2.5 border-b border-r border-cyan-400/60 pointer-events-none z-10"></div>
+
+                        <!-- Empty State Prompt -->
+                        <div id="slot-empty-5" onclick="document.getElementById('specimen-file-5').click()" class="w-full h-full flex flex-col items-center justify-center p-4 text-center cursor-pointer hover:bg-white/[0.02] transition">
+                            <svg class="w-8 h-8 text-slate-600 group-hover:text-cyan-400 transition mb-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                <polyline points="21 15 16 10 5 21"></polyline>
+                            </svg>
+                            <span class="font-mono text-xs text-slate-300 font-medium">LOAD_SPECIMEN_IMG</span>
+                            <span class="font-mono text-[10px] text-slate-500 mt-1">CLICK OR DROP FILE</span>
+                        </div>
+
+                        <!-- Loaded Image -->
+                        <img id="slot-img-5" src="" alt="MEM_SLOT_06" class="hidden w-full h-full object-cover">
+
+                        <!-- Loaded Image Action Controls -->
+                        <div id="slot-actions-5" class="hidden absolute bottom-2 right-2 z-20 flex items-center gap-1.5">
+                            <button onclick="openInspectorModal(5)" title="Inspect full resolution" class="px-2 py-1 rounded bg-[#090a0f]/90 hover:bg-cyan-500 text-slate-200 hover:text-slate-950 border border-hairline font-mono text-[10px] font-bold transition">
+                                INSPECT
+                            </button>
+                            <button onclick="document.getElementById('specimen-file-5').click()" title="Replace image" class="px-2 py-1 rounded bg-[#090a0f]/90 hover:bg-[#ff5e1a] text-slate-200 hover:text-slate-950 border border-hairline font-mono text-[10px] font-bold transition">
+                                SWAP
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Editable Specimen Caption -->
+                    <div class="mt-3 pt-2.5 border-t border-hairline flex items-start gap-2 font-mono text-xs">
+                        <span class="text-slate-600 select-none">&gt;</span>
+                        <p id="slot-cap-5" contenteditable="true" spellcheck="false" class="text-slate-300 leading-snug cursor-text flex-1">
+                            New solar cycle initialization
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. ENCRYPTED BIRTHDAY PAYLOAD VAULT (4 MYSTERY MODULES) -->
+        <section class="hw-panel rounded-xl p-6 sm:p-8 space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3 pb-4 border-b border-hairline">
+                <div>
+                    <div class="font-mono text-xs text-[#ff5e1a] tracking-wider uppercase">SUBSYSTEM_03 // CRYPTOGRAPHIC_REWARD_VAULT</div>
+                    <h2 class="text-xl sm:text-2xl font-bold text-white mt-0.5">Encrypted Birthday Payloads [04]</h2>
+                </div>
+                <button onclick="relockAllPayloads()" class="self-start sm:self-auto font-mono text-xs text-slate-400 hover:text-cyan-400 underline underline-offset-4">
+                    RE_ENCRYPT_ALL_MODULES
+                </button>
+            </div>
+
+            <div id="payload-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                        <button onclick="unlockPayloadModule(0)" class="te-btn h-52 rounded-lg bg-[#090a0f] hover:bg-[#111420] border border-hairline hover:border-cyan-500/50 p-5 flex flex-col justify-between text-left transition group cursor-pointer relative overflow-hidden">
+                            <div class="flex items-center justify-between w-full font-mono text-[11px]">
+                                <span class="text-slate-400 font-bold">PAYLOAD_01</span>
+                                <span class="px-1.5 py-0.5 rounded bg-surface text-amber-400 border border-hairline">LOCKED</span>
+                            </div>
+
+                            <div class="my-auto flex flex-col items-center justify-center w-full py-2">
+                                <div class="w-11 h-11 rounded-lg bg-surface border border-hairline group-hover:border-cyan-400/60 flex items-center justify-center text-slate-400 group-hover:text-cyan-400 transition">
+                                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                    </svg>
+                                </div>
+                                <span class="font-mono text-[10px] text-slate-500 mt-2.5">SHA256::8F4A...C91E</span>
+                            </div>
+
+                            <div class="w-full pt-2 border-t border-hairline flex items-center justify-between font-mono text-[11px] text-cyan-400">
+                                <span>CLICK_TO_DECRYPT</span>
+                                <span>→</span>
+                            </div>
+                        </button>
+                    
+                        <button onclick="unlockPayloadModule(1)" class="te-btn h-52 rounded-lg bg-[#090a0f] hover:bg-[#111420] border border-hairline hover:border-cyan-500/50 p-5 flex flex-col justify-between text-left transition group cursor-pointer relative overflow-hidden">
+                            <div class="flex items-center justify-between w-full font-mono text-[11px]">
+                                <span class="text-slate-400 font-bold">PAYLOAD_02</span>
+                                <span class="px-1.5 py-0.5 rounded bg-surface text-amber-400 border border-hairline">LOCKED</span>
+                            </div>
+
+                            <div class="my-auto flex flex-col items-center justify-center w-full py-2">
+                                <div class="w-11 h-11 rounded-lg bg-surface border border-hairline group-hover:border-cyan-400/60 flex items-center justify-center text-slate-400 group-hover:text-cyan-400 transition">
+                                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                    </svg>
+                                </div>
+                                <span class="font-mono text-[10px] text-slate-500 mt-2.5">SHA256::3B9C...E02D</span>
+                            </div>
+
+                            <div class="w-full pt-2 border-t border-hairline flex items-center justify-between font-mono text-[11px] text-cyan-400">
+                                <span>CLICK_TO_DECRYPT</span>
+                                <span>→</span>
+                            </div>
+                        </button>
+                    
+                        <button onclick="unlockPayloadModule(2)" class="te-btn h-52 rounded-lg bg-[#090a0f] hover:bg-[#111420] border border-hairline hover:border-cyan-500/50 p-5 flex flex-col justify-between text-left transition group cursor-pointer relative overflow-hidden">
+                            <div class="flex items-center justify-between w-full font-mono text-[11px]">
+                                <span class="text-slate-400 font-bold">PAYLOAD_03</span>
+                                <span class="px-1.5 py-0.5 rounded bg-surface text-amber-400 border border-hairline">LOCKED</span>
+                            </div>
+
+                            <div class="my-auto flex flex-col items-center justify-center w-full py-2">
+                                <div class="w-11 h-11 rounded-lg bg-surface border border-hairline group-hover:border-cyan-400/60 flex items-center justify-center text-slate-400 group-hover:text-cyan-400 transition">
+                                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                    </svg>
+                                </div>
+                                <span class="font-mono text-[10px] text-slate-500 mt-2.5">SHA256::7D12...A44B</span>
+                            </div>
+
+                            <div class="w-full pt-2 border-t border-hairline flex items-center justify-between font-mono text-[11px] text-cyan-400">
+                                <span>CLICK_TO_DECRYPT</span>
+                                <span>→</span>
+                            </div>
+                        </button>
+                    
+                        <button onclick="unlockPayloadModule(3)" class="te-btn h-52 rounded-lg bg-[#090a0f] hover:bg-[#111420] border border-hairline hover:border-cyan-500/50 p-5 flex flex-col justify-between text-left transition group cursor-pointer relative overflow-hidden">
+                            <div class="flex items-center justify-between w-full font-mono text-[11px]">
+                                <span class="text-slate-400 font-bold">PAYLOAD_04</span>
+                                <span class="px-1.5 py-0.5 rounded bg-surface text-amber-400 border border-hairline">LOCKED</span>
+                            </div>
+
+                            <div class="my-auto flex flex-col items-center justify-center w-full py-2">
+                                <div class="w-11 h-11 rounded-lg bg-surface border border-hairline group-hover:border-cyan-400/60 flex items-center justify-center text-slate-400 group-hover:text-cyan-400 transition">
+                                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                    </svg>
+                                </div>
+                                <span class="font-mono text-[10px] text-slate-500 mt-2.5">SHA256::9E05...F78A</span>
+                            </div>
+
+                            <div class="w-full pt-2 border-t border-hairline flex items-center justify-between font-mono text-[11px] text-cyan-400">
+                                <span>CLICK_TO_DECRYPT</span>
+                                <span>→</span>
+                            </div>
+                        </button>
+                    </div>
+        </section>
+
+    </main>
+
+    <!-- LIGHTBOX SPECIMEN INSPECTOR MODAL -->
+    <div id="inspector-modal" class="fixed inset-0 z-50 hidden bg-black/85 backdrop-blur-md flex items-center justify-center p-4" onclick="closeInspectorModal(event)">
+        <div class="hw-panel max-w-3xl w-full rounded-xl overflow-hidden border border-cyan-500/40 shadow-2xl" onclick="event.stopPropagation()">
+            <div class="flex items-center justify-between px-4 py-3 bg-[#090a0f] border-b border-hairline font-mono text-xs">
+                <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
+                    <span id="modal-slot-id" class="text-cyan-400 font-bold">MEM_SLOT_01</span>
+                    <span class="text-slate-500">// HIGH_RES_INSPECTOR</span>
+                </div>
+                <button onclick="closeInspectorModal()" class="px-2.5 py-1 rounded bg-surface hover:bg-rose-500/20 text-slate-300 hover:text-rose-300 border border-hairline transition">
+                    ESC // CLOSE
+                </button>
+            </div>
+            <div class="p-4 sm:p-6 bg-[#06070a] flex items-center justify-center max-h-[72vh] overflow-hidden">
+                <img id="modal-image" src="" alt="Specimen high resolution preview" class="max-h-[65vh] w-auto object-contain rounded border border-hairline">
+            </div>
+            <div class="px-4 py-3 bg-[#090a0f] border-t border-hairline flex flex-wrap items-center justify-between gap-2 font-mono text-xs">
+                <span id="modal-caption" class="text-slate-200">CAPTION_DATA</span>
+                <span id="modal-timestamp" class="text-slate-500">TS: 2026.11.18</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-hairline bg-[#090a0f]/80 py-6 px-4 text-center font-mono text-xs text-slate-500 relative z-10">
+        BDAY_OS // ENGINEERED CELEBRATION TERMINAL • ZERO BLOAT • ALL SYSTEMS OPERATIONAL
+    </footer>
+
+    <!-- APPLICATION LOGIC -->
+    <script>
+        /* ==========================================================================
+           1. LIVE CLOCK & SESSION UPTIME COUNTER
+           ========================================================================== */
+        const bootTimestamp = Date.now();
+
+        function updateTelemetryClocks() {
+            const now = new Date();
+            const clockEl = document.getElementById('live-clock');
+            if (clockEl) {
+                clockEl.textContent = now.toISOString().split('T')[1].split('.')[0] + ' UTC';
+            }
+
+            const elapsedSec = Math.floor((Date.now() - bootTimestamp) / 1000);
+            const days = String(Math.floor(elapsedSec / 86400)).padStart(2, '0');
+            const hrs = String(Math.floor((elapsedSec % 86400) / 3600)).padStart(2, '0');
+            const mins = String(Math.floor((elapsedSec % 3600) / 60)).padStart(2, '0');
+            const secs = String(elapsedSec % 60).padStart(2, '0');
+
+            const uptimeEl = document.getElementById('session-uptime');
+            if (uptimeEl) {
+                uptimeEl.textContent = `${days}d ${hrs}h ${mins}m ${secs}s`;
+            }
+        }
+        setInterval(updateTelemetryClocks, 1000);
+        updateTelemetryClocks();
+
+        /* ==========================================================================
+           2. WEB AUDIO SYNTHESIZER (Polyphonic Chiptune Happy Birthday + FX)
+           ========================================================================== */
+        let audioCtx = null;
+        let isMelodyPlaying = false;
+        let melodyTimers = [];
+
+        function ensureAudioContext() {
+            if (!audioCtx) {
+                const Ctx = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new Ctx();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            return audioCtx;
+        }
+
+        function triggerSynthVoice(freq, duration, startTime, vol = 0.14, wave = 'triangle') {
+            const ctx = ensureAudioContext();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+
+            osc.type = wave;
+            osc.frequency.setValueAtTime(freq, startTime);
+
+            gain.gain.setValueAtTime(0.001, startTime);
+            gain.gain.exponentialRampToValueAtTime(vol, startTime + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+
+            osc.start(startTime);
+            osc.stop(startTime + duration + 0.04);
+        }
+
+        function playBirthdaySynth() {
+            stopSynthMelody();
+            isMelodyPlaying = true;
+            updateAudioToggleUI();
+
+            const ctx = ensureAudioContext();
+            const t0 = ctx.currentTime + 0.05;
+
+            const F = {
+                G3: 196.00, C4: 261.63, F4: 349.23,
+                G4: 392.00, A4: 440.00, B4: 493.88,
+                C5: 523.25, D5: 587.33, E5: 659.25, F5: 698.46, G5: 783.99
+            };
+
+            const b = 0.38;
+            const lead = [
+                { f: F.G4, d: b * 0.75, t: 0, bass: F.C4 },
+                { f: F.G4, d: b * 0.25, t: b * 0.75 },
+                { f: F.A4, d: b, t: b * 1 },
+                { f: F.G4, d: b, t: b * 2 },
+                { f: F.C5, d: b, t: b * 3, bass: F.C4 },
+                { f: F.B4, d: b * 2, t: b * 4, bass: F.G3 },
+
+                { f: F.G4, d: b * 0.75, t: b * 6 },
+                { f: F.G4, d: b * 0.25, t: b * 6.75 },
+                { f: F.A4, d: b, t: b * 7 },
+                { f: F.G4, d: b, t: b * 8 },
+                { f: F.D5, d: b, t: b * 9, bass: F.G3 },
+                { f: F.C5, d: b * 2, t: b * 10, bass: F.C4 },
+
+                { f: F.G4, d: b * 0.75, t: b * 12 },
+                { f: F.G4, d: b * 0.25, t: b * 12.75 },
+                { f: F.G5, d: b, t: b * 13, bass: F.C4 },
+                { f: F.E5, d: b, t: b * 14 },
+                { f: F.C5, d: b, t: b * 15, bass: F.F4 },
+                { f: F.B4, d: b, t: b * 16 },
+                { f: F.A4, d: b * 2, t: b * 17 },
+
+                { f: F.F5, d: b * 0.75, t: b * 19, bass: F.F4 },
+                { f: F.F5, d: b * 0.25, t: b * 19.75 },
+                { f: F.E5, d: b, t: b * 20, bass: F.C4 },
+                { f: F.C5, d: b, t: b * 21 },
+                { f: F.D5, d: b, t: b * 22, bass: F.G3 },
+                { f: F.C5, d: b * 2.5, t: b * 23, bass: F.C4 }
+            ];
+
+            lead.forEach(n => {
+                triggerSynthVoice(n.f, n.d * 0.92, t0 + n.t, 0.15, 'triangle');
+                triggerSynthVoice(n.f * 2, n.d * 0.5, t0 + n.t, 0.03, 'square');
+                if (n.bass) {
+                    triggerSynthVoice(n.bass, b * 1.8, t0 + n.t, 0.12, 'sine');
+                }
+            });
+
+            const endTimer = setTimeout(() => {
+                isMelodyPlaying = false;
+                updateAudioToggleUI();
+            }, (b * 26) * 1000);
+            melodyTimers.push(endTimer);
+        }
+
+        function stopSynthMelody() {
+            melodyTimers.forEach(id => clearTimeout(id));
+            melodyTimers = [];
+            isMelodyPlaying = false;
+            updateAudioToggleUI();
+        }
+
+        function toggleSynthMelody() {
+            if (isMelodyPlaying) {
+                stopSynthMelody();
+            } else {
+                playBirthdaySynth();
+            }
+        }
+
+        function updateAudioToggleUI() {
+            const label = document.getElementById('audio-label');
+            if (label) {
+                label.textContent = isMelodyPlaying ? 'SYNTH_AUDIO: ACTIVE' : 'SYNTH_AUDIO: PLAY';
+            }
+        }
+
+        function playPacketPopFx() {
+            try {
+                const ctx = ensureAudioContext();
+                const now = ctx.currentTime;
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(520, now);
+                osc.frequency.exponentialRampToValueAtTime(95, now + 0.08);
+                gain.gain.setValueAtTime(0.25, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.09);
+            } catch (e) {}
+        }
+
+        function playUnlockArpeggio() {
+            try {
+                const ctx = ensureAudioContext();
+                const now = ctx.currentTime;
+                [440, 554.37, 659.25, 880, 1108.73].forEach((freq, i) => {
+                    triggerSynthVoice(freq, 0.35, now + i * 0.055, 0.11, 'triangle');
+                });
+            } catch (e) {}
+        }
+
+        /* ==========================================================================
+           3. GEOMETRIC VECTOR CONFETTI BURST
+           ========================================================================== */
+        function fireVectorBurst() {
+            if (typeof confetti !== 'function') return;
+            const palette = ['#ff5e1a', '#00e5ff', '#10b981', '#8b5cf6', '#f8fafc'];
+            confetti({
+                particleCount: 80,
+                spread: 75,
+                shapes: ['square'],
+                origin: { y: 0.6 },
+                colors: palette
+            });
+            setTimeout(() => {
+                confetti({
+                    particleCount: 45,
+                    angle: 60,
+                    spread: 55,
+                    shapes: ['square'],
+                    origin: { x: 0, y: 0.65 },
+                    colors: palette
+                });
+                confetti({
+                    particleCount: 45,
+                    angle: 120,
+                    spread: 55,
+                    shapes: ['square'],
+                    origin: { x: 1, y: 0.65 },
+                    colors: palette
+                });
+            }, 180);
+        }
+
+        /* ==========================================================================
+           4. PCB CAKE EMITTERS & LIVE CANVAS OSCILLOSCOPE
+           ========================================================================== */
+        let emitterStates = [true, true, true, true, true];
+        let micStream = null;
+        let analyserNode = null;
+        let scopeRaf = null;
+
+        function updateIgnitionBadge() {
+            const activeCount = emitterStates.filter(Boolean).length;
+            const badge = document.getElementById('ignition-status-badge');
+            if (!badge) return;
+
+            if (activeCount > 0) {
+                badge.className = 'self-start md:self-center px-3 py-1 rounded bg-amber-500/10 border border-amber-500/30 font-mono text-xs text-amber-400';
+                badge.textContent = `STATE: ${activeCount} / 5 PLASMA_CELLS_ACTIVE`;
+            } else {
+                badge.className = 'self-start md:self-center px-3 py-1 rounded bg-emerald-500/10 border border-emerald-500/30 font-mono text-xs text-emerald-400';
+                badge.textContent = 'STATE: WISH_PACKET_DISPATCHED [0/5]';
+            }
+        }
+
+        function extinguishEmitter(idx) {
+            if (!emitterStates[idx]) return;
+            emitterStates[idx] = false;
+
+            const flame = document.getElementById(`plasma-${idx}`);
+            const vapor = document.getElementById(`vapor-${idx}`);
+            if (flame) flame.classList.add('extinguished');
+            if (vapor) {
+                vapor.classList.remove('active');
+                void vapor.offsetWidth;
+                vapor.classList.add('active');
+            }
+
+            playPacketPopFx();
+            updateIgnitionBadge();
+
+            if (emitterStates.every(s => !s)) {
+                onAllEmittersPurged();
+            }
+        }
+
+        function purgeAllEmitters() {
+            emitterStates.forEach((active, i) => {
+                if (active) {
+                    setTimeout(() => extinguishEmitter(i), i * 75);
+                }
+            });
+        }
+
+        function onAllEmittersPurged() {
+            stopMicOscilloscope();
+            document.getElementById('purge-all-btn').classList.add('hidden');
+            document.getElementById('mic-sensor-btn').classList.add('hidden');
+            document.getElementById('reignite-btn').classList.remove('hidden');
+
+            fireVectorBurst();
+            playBirthdaySynth();
+        }
+
+        function reigniteEmitters() {
+            emitterStates = [true, true, true, true, true];
+            for (let i = 0; i < 5; i++) {
+                const flame = document.getElementById(`plasma-${i}`);
+                const vapor = document.getElementById(`vapor-${i}`);
+                if (flame) flame.classList.remove('extinguished');
+                if (vapor) vapor.classList.remove('active');
+            }
+            document.getElementById('purge-all-btn').classList.remove('hidden');
+            document.getElementById('mic-sensor-btn').classList.remove('hidden');
+            document.getElementById('reignite-btn').classList.add('hidden');
+            updateIgnitionBadge();
+            playUnlockArpeggio();
+        }
+
+        // Live Oscilloscope Renderer (Idle sine wave when armed/standby, live mic waveform when armed)
+        let idlePhase = 0;
+        function renderOscilloscopeLoop() {
+            const canvas = document.getElementById('oscilloscope-canvas');
+            if (!canvas) return;
+
+            // Match internal resolution to container
+            const rect = canvas.getBoundingClientRect();
+            if (canvas.width !== Math.floor(rect.width) || canvas.height !== Math.floor(rect.height)) {
+                canvas.width = Math.floor(rect.width);
+                canvas.height = Math.floor(rect.height);
+            }
+
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+
+            ctx.clearRect(0, 0, w, h);
+
+            // Center baseline & graticule
+            ctx.strokeStyle = 'rgba(0, 229, 255, 0.12)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(0, h / 2);
+            ctx.lineTo(w, h / 2);
+            ctx.stroke();
+
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = analyserNode ? '#00e5ff' : '#334155';
+            ctx.beginPath();
+
+            if (analyserNode) {
+                const bufferLen = analyserNode.frequencyBinCount;
+                const timeData = new Uint8Array(bufferLen);
+                const freqData = new Uint8Array(bufferLen);
+                analyserNode.getByteTimeDomainData(timeData);
+                analyserNode.getByteFrequencyData(freqData);
+
+                const sliceWidth = w / bufferLen;
+                let x = 0;
+                for (let i = 0; i < bufferLen; i++) {
+                    const v = timeData[i] / 128.0;
+                    const y = (v * h) / 2;
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                    x += sliceWidth;
+                }
+
+                // Calculate air blow energy in low frequencies
+                let lowSum = 0;
+                for (let i = 0; i < 28; i++) lowSum += freqData[i];
+                const avgEnergy = Math.round(lowSum / 28);
+
+                const dbEl = document.getElementById('db-readout');
+                if (dbEl) dbEl.textContent = `LEVEL: ${avgEnergy} / 82`;
+
+                if (avgEnergy >= 82 && emitterStates.some(Boolean)) {
+                    purgeAllEmitters();
+                }
+            } else {
+                // Idle standby carrier wave
+                idlePhase += 0.04;
+                for (let x = 0; x < w; x += 3) {
+                    const y = h / 2 + Math.sin(x * 0.03 + idlePhase) * 6;
+                    if (x === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+            }
+
+            ctx.stroke();
+            scopeRaf = requestAnimationFrame(renderOscilloscopeLoop);
+        }
+
+        async function toggleMicOscilloscope() {
+            if (micStream) {
+                stopMicOscilloscope();
+                return;
+            }
+            const label = document.getElementById('mic-sensor-label');
+            const led = document.getElementById('scope-led');
+            const dbEl = document.getElementById('db-readout');
+
+            try {
+                micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                const ctx = ensureAudioContext();
+                const src = ctx.createMediaStreamSource(micStream);
+                analyserNode = ctx.createAnalyser();
+                analyserNode.fftSize = 256;
+                src.connect(analyserNode);
+
+                label.textContent = 'LISTENING... BLOW_INTO_MIC';
+                led.className = 'w-2 h-2 rounded-full bg-cyan-400 animate-ping';
+                dbEl.textContent = 'INPUT: ACTIVE';
+            } catch (err) {
+                label.textContent = 'MIC_DENIED // USE_PURGE_BTN';
+                setTimeout(() => {
+                    label.textContent = 'ARM_MIC_SENSOR';
+                }, 2400);
+            }
+        }
+
+        function stopMicOscilloscope() {
+            if (micStream) {
+                micStream.getTracks().forEach(t => t.stop());
+                micStream = null;
+            }
+            analyserNode = null;
+            const label = document.getElementById('mic-sensor-label');
+            const led = document.getElementById('scope-led');
+            const dbEl = document.getElementById('db-readout');
+            if (label) label.textContent = 'ARM_MIC_SENSOR';
+            if (led) led.className = 'w-2 h-2 rounded-full bg-slate-600';
+            if (dbEl) dbEl.textContent = 'INPUT: STANDBY';
+        }
+
+        /* ==========================================================================
+           5. 6-PHOTO TECHNICAL SPECIMEN / MEMORY ARCHIVE MATRIX
+           ========================================================================== */
+        const specimenSlots = [
+            { id: 'MEM_SLOT_01', timestamp: '2026.01.14 // 19:42', caption: 'grabe palo', imgSrc: 'img1.jpg' },
+            { id: 'MEM_SLOT_02', timestamp: '2026.03.22 // 14:15', caption: 'dancer', imgSrc: 'img2.jpg' },
+            { id: 'MEM_SLOT_03', timestamp: '2026.05.09 // 21:08', caption: 'pacute', imgSrc: 'img3.jpg' },
+            { id: 'MEM_SLOT_04', timestamp: '2026.07.19 // 11:30', caption: 'eyyy', imgSrc: 'img4.jpg' },
+            { id: 'MEM_SLOT_05', timestamp: '2026.09.04 // 18:50', caption: 'deym', imgSrc: 'img5.jpg' },
+            { id: 'MEM_SLOT_06', timestamp: '2026.11.18 // 00:00', caption: 'cutie', imgSrc: 'img6.jpg' }
+        ];
+
+        function renderSpecimenMatrix() {
+            const grid = document.getElementById('specimen-grid');
+            grid.innerHTML = specimenSlots.map((slot, idx) => `
+                <div class="bg-[#090a0f] border border-hairline hover:border-cyan-500/40 rounded-lg p-3.5 flex flex-col justify-between transition group relative"
+                     ondragover="event.preventDefault(); this.classList.add('border-cyan-400');"
+                     ondragleave="this.classList.remove('border-cyan-400');"
+                     ondrop="handleSpecimenDrop(event, ${idx})">
+
+                    <!-- Top Registration Bar -->
+                    <div class="flex items-center justify-between font-mono text-[11px] text-slate-400 mb-2.5">
+                        <span class="text-cyan-400 font-semibold">${slot.id}</span>
+                        <span id="slot-ts-${idx}" contenteditable="true" spellcheck="false" class="text-slate-500 cursor-text">${slot.timestamp}</span>
+                    </div>
+
+                    <!-- Hidden File Input -->
+                    <input type="file" id="specimen-file-${idx}" accept="image/*" class="hidden" onchange="handleSpecimenFile(event, ${idx})" />
+
+                    <!-- Image Viewport with CAD Crosshairs -->
+                    <div class="relative aspect-[4/3] w-full rounded bg-[#0d1017] border border-dashed border-slate-700 group-hover:border-cyan-500/50 overflow-hidden flex items-center justify-center">
+                        <!-- Registration Corner Crosshairs -->
+                        <div class="absolute top-2 left-2 w-2.5 h-2.5 border-t border-l border-cyan-400/60 pointer-events-none z-10"></div>
+                        <div class="absolute top-2 right-2 w-2.5 h-2.5 border-t border-r border-cyan-400/60 pointer-events-none z-10"></div>
+                        <div class="absolute bottom-2 left-2 w-2.5 h-2.5 border-b border-l border-cyan-400/60 pointer-events-none z-10"></div>
+                        <div class="absolute bottom-2 right-2 w-2.5 h-2.5 border-b border-r border-cyan-400/60 pointer-events-none z-10"></div>
+
+                        <!-- Empty State Prompt -->
+                        <div id="slot-empty-${idx}" onclick="document.getElementById('specimen-file-${idx}').click()"
+                             class="${slot.imgSrc ? 'hidden' : ''} w-full h-full flex flex-col items-center justify-center p-4 text-center cursor-pointer hover:bg-white/[0.02] transition">
+                            <svg class="w-8 h-8 text-slate-600 group-hover:text-cyan-400 transition mb-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                <polyline points="21 15 16 10 5 21"></polyline>
+                            </svg>
+                            <span class="font-mono text-xs text-slate-300 font-medium">LOAD_SPECIMEN_IMG</span>
+                            <span class="font-mono text-[10px] text-slate-500 mt-1">CLICK OR DROP FILE</span>
+                        </div>
+
+                        <!-- Loaded Image -->
+                        <img id="slot-img-${idx}" src="${slot.imgSrc}" alt="${slot.id}" class="${slot.imgSrc ? '' : 'hidden'} w-full h-full object-cover" />
+
+                        <!-- Loaded Image Action Controls -->
+                        <div id="slot-actions-${idx}" class="${slot.imgSrc ? '' : 'hidden'} absolute bottom-2 right-2 z-20 flex items-center gap-1.5">
+                            <button onclick="openInspectorModal(${idx})" title="Inspect full resolution"
+                                class="px-2 py-1 rounded bg-[#090a0f]/90 hover:bg-cyan-500 text-slate-200 hover:text-slate-950 border border-hairline font-mono text-[10px] font-bold transition">
+                                INSPECT
+                            </button>
+                            <button onclick="document.getElementById('specimen-file-${idx}').click()" title="Replace image"
+                                class="px-2 py-1 rounded bg-[#090a0f]/90 hover:bg-[#ff5e1a] text-slate-200 hover:text-slate-950 border border-hairline font-mono text-[10px] font-bold transition">
+                                SWAP
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Editable Specimen Caption -->
+                    <div class="mt-3 pt-2.5 border-t border-hairline flex items-start gap-2 font-mono text-xs">
+                        <span class="text-slate-600 select-none">&gt;</span>
+                        <p id="slot-cap-${idx}" contenteditable="true" spellcheck="false"
+                           class="text-slate-300 leading-snug cursor-text flex-1">
+                            ${slot.caption}
+                        </p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function loadSpecimenDataUrl(file, idx) {
+            if (!file || !file.type.startsWith('image/')) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                specimenSlots[idx].imgSrc = e.target.result;
+                const img = document.getElementById(`slot-img-${idx}`);
+                const empty = document.getElementById(`slot-empty-${idx}`);
+                const actions = document.getElementById(`slot-actions-${idx}`);
+
+                img.src = e.target.result;
+                img.classList.remove('hidden');
+                empty.classList.add('hidden');
+                actions.classList.remove('hidden');
+                playUnlockArpeggio();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function handleSpecimenFile(event, idx) {
+            loadSpecimenDataUrl(event.target.files[0], idx);
+        }
+
+        function handleSpecimenDrop(event, idx) {
+            event.preventDefault();
+            event.currentTarget.classList.remove('border-cyan-400');
+            const file = event.dataTransfer.files[0];
+            loadSpecimenDataUrl(file, idx);
+        }
+
+        // Lightbox Inspector
+        function openInspectorModal(idx) {
+            const slot = specimenSlots[idx];
+            if (!slot.imgSrc) return;
+
+            document.getElementById('modal-slot-id').textContent = slot.id;
+            document.getElementById('modal-image').src = slot.imgSrc;
+            document.getElementById('modal-caption').textContent = document.getElementById(`slot-cap-${idx}`).textContent.trim();
+            document.getElementById('modal-timestamp').textContent = document.getElementById(`slot-ts-${idx}`).textContent.trim();
+            document.getElementById('inspector-modal').classList.remove('hidden');
+        }
+
+        function closeInspectorModal() {
+            document.getElementById('inspector-modal').classList.add('hidden');
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeInspectorModal();
+        });
+
+        /* ==========================================================================
+           6. PACKET POP / SIGNAL BALLOON INTERCEPTOR
+           ========================================================================== */
+        let interceptedCount = 0;
+
+        const telemetryLogPayloads = [
+            'ACK_200 // ZERO_BUGS_THIS_YEAR',
+            'PKT_0x7F // UNLIMITED_CAKE_BANDWIDTH',
+            'MSG_SYNC // PEAK_HAPPINESS_ALLOCATED',
+            'SYS_UPGRADE // +100_CREATIVITY_BOOST',
+            'SIG_LOCK // LEGENDARY_STATUS_VERIFIED',
+            'HEX_FF // MAXIMUM_GOOD_VIBES_ROUTED',
+            'CORE_TEMP // OPTIMAL_CELEBRATION_MODE'
+        ];
+
+        const nodeAccentPalette = ['#00e5ff', '#ff5e1a', '#10b981', '#8b5cf6'];
+
+        function spawnTelemetryNode() {
+            const sky = document.getElementById('telemetry-sky');
+            if (!sky) return;
+
+            const color = nodeAccentPalette[Math.floor(Math.random() * nodeAccentPalette.length)];
+            const logMsg = telemetryLogPayloads[Math.floor(Math.random() * telemetryLogPayloads.length)];
+            const hexId = '0x' + Math.floor(16 + Math.random() * 239).toString(16).toUpperCase();
+            const leftPos = 6 + Math.random() * 86;
+            const duration = 9 + Math.random() * 5;
+
+            const node = document.createElement('div');
+            node.className = 'telemetry-node pointer-events-auto';
+            node.style.left = `${leftPos}%`;
+            node.style.animationDuration = `${duration}s`;
+            node.title = 'Click to intercept telemetry packet';
+
+            node.innerHTML = `
+                <svg width="68" height="94" viewBox="0 0 68 94" class="drop-shadow-[0_0_10px_rgba(0,0,0,0.8)]">
+                    <!-- Tether line -->
+                    <line x1="34" y1="62" x2="34" y2="90" stroke="${color}" stroke-width="1.2" stroke-dasharray="3 2" opacity="0.7" />
+                    <circle cx="34" cy="91" r="2" fill="${color}" />
+                    <!-- Outer Sensor Ring -->
+                    <circle cx="34" cy="32" r="28" fill="#090a0f" fill-opacity="0.88" stroke="${color}" stroke-width="1.5" />
+                    <circle cx="34" cy="32" r="22" fill="none" stroke="${color}" stroke-width="0.75" stroke-dasharray="4 3" opacity="0.65" />
+                    <!-- Crosshair ticks -->
+                    <line x1="34" y1="2" x2="34" y2="8" stroke="${color}" stroke-width="1.5" />
+                    <line x1="34" y1="56" x2="34" y2="62" stroke="${color}" stroke-width="1.5" />
+                    <line x1="4" y1="32" x2="10" y2="32" stroke="${color}" stroke-width="1.5" />
+                    <line x1="58" y1="32" x2="64" y2="32" stroke="${color}" stroke-width="1.5" />
+                    <!-- Hex Packet Label -->
+                    <text x="34" y="30" fill="#f8fafc" font-family="JetBrains Mono" font-size="10" font-weight="bold" text-anchor="middle">${hexId}</text>
+                    <text x="34" y="41" fill="${color}" font-family="JetBrains Mono" font-size="7" text-anchor="middle">PKT_NODE</text>
+                </svg>
+            `;
+
+            node.addEventListener('click', (e) => {
+                interceptTelemetryNode(node, e.clientX, e.clientY, logMsg, color);
+            });
+
+            sky.appendChild(node);
+            setTimeout(() => {
+                if (node.parentNode) node.remove();
+            }, duration * 1000);
+        }
+
+        function interceptTelemetryNode(el, x, y, message, color) {
+            playPacketPopFx();
+            el.remove();
+
+            interceptedCount++;
+            const scoreEl = document.getElementById('packet-score');
+            if (scoreEl) scoreEl.textContent = String(interceptedCount).padStart(2, '0');
+
+            if (typeof confetti === 'function') {
+                confetti({
+                    particleCount: 18,
+                    spread: 50,
+                    startVelocity: 20,
+                    shapes: ['square'],
+                    origin: { x: x / window.innerWidth, y: y / window.innerHeight },
+                    colors: [color, '#ffffff']
+                });
+            }
+
+            const toastLayer = document.getElementById('toast-layer');
+            const toast = document.createElement('div');
+            toast.className = 'telemetry-toast fixed px-3.5 py-1.5 rounded bg-[#090a0f]/95 border border-cyan-500/50 shadow-xl font-mono text-xs text-cyan-300 whitespace-nowrap';
+            toast.style.left = `${Math.min(Math.max(x, 140), window.innerWidth - 140)}px`;
+            toast.style.top = `${Math.max(y, 70)}px`;
+            toast.textContent = message;
+
+            toastLayer.appendChild(toast);
+            setTimeout(() => toast.remove(), 2600);
+        }
+
+        function spawnTelemetryWave(count = 5) {
+            for (let i = 0; i < count; i++) {
+                setTimeout(() => spawnTelemetryNode(), i * 320);
+            }
+        }
+
+        /* ==========================================================================
+           7. ENCRYPTED BIRTHDAY PAYLOAD VAULT (4 MYSTERY MODULES)
+           ========================================================================== */
+        const vaultPayloads = [
+            {
+                id: 'PAYLOAD_01',
+                hash: 'SHA256::8F4A...C91E',
+                title: 'DINNER_OVERRIDE_TOKEN',
+                detail: 'Happy bday boss',
+                accent: 'text-[#ff5e1a]',
+                border: 'border-[#ff5e1a]/50'
+            },
+            {
+                id: 'PAYLOAD_02',
+                hash: 'SHA256::3B9C...E02D',
+                title: 'ROOT_ADMIN_PRIVILEGES',
+                detail: 'MBTC JIM',
+                accent: 'text-cyan-400',
+                border: 'border-cyan-500/50'
+            },
+            {
+                id: 'PAYLOAD_03',
+                hash: 'SHA256::7D12...A44B',
+                title: 'CAFFEINE_&_PASTRY_GRANT',
+                detail: 'ingat lagi mwah',
+                accent: 'text-emerald-400',
+                border: 'border-emerald-500/50'
+            },
+            {
+                id: 'PAYLOAD_04',
+                hash: 'SHA256::9E05...F78A',
+                title: 'ANNUAL_LUCK_FIRMWARE',
+                detail: 'ugh ugh',
+                accent: 'text-violet-400',
+                border: 'border-violet-500/50'
+            }
+        ];
+
+        let unlockedVaultIds = new Set();
+        let decryptingIds = new Set();
+
+        function renderPayloadVault() {
+            const grid = document.getElementById('payload-grid');
+            grid.innerHTML = vaultPayloads.map((item, idx) => {
+                const isUnlocked = unlockedVaultIds.has(idx);
+                const isDecrypting = decryptingIds.has(idx);
+
+                if (isDecrypting) {
+                    return `
+                        <div class="h-52 rounded-lg bg-[#090a0f] border border-cyan-500/60 p-5 flex flex-col items-center justify-center text-center font-mono space-y-3">
+                            <div class="w-8 h-8 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
+                            <div class="text-xs text-cyan-400 font-bold tracking-wider">DECRYPTING_KEY...</div>
+                            <div class="text-[10px] text-slate-500">${item.hash}</div>
+                        </div>
+                    `;
+                }
+
+                if (!isUnlocked) {
+                    return `
+                        <button onclick="unlockPayloadModule(${idx})"
+                            class="te-btn h-52 rounded-lg bg-[#090a0f] hover:bg-[#111420] border border-hairline hover:border-cyan-500/50 p-5 flex flex-col justify-between text-left transition group cursor-pointer relative overflow-hidden">
+                            <div class="flex items-center justify-between w-full font-mono text-[11px]">
+                                <span class="text-slate-400 font-bold">${item.id}</span>
+                                <span class="px-1.5 py-0.5 rounded bg-surface text-amber-400 border border-hairline">LOCKED</span>
+                            </div>
+
+                            <div class="my-auto flex flex-col items-center justify-center w-full py-2">
+                                <div class="w-11 h-11 rounded-lg bg-surface border border-hairline group-hover:border-cyan-400/60 flex items-center justify-center text-slate-400 group-hover:text-cyan-400 transition">
+                                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                    </svg>
+                                </div>
+                                <span class="font-mono text-[10px] text-slate-500 mt-2.5">${item.hash}</span>
+                            </div>
+
+                            <div class="w-full pt-2 border-t border-hairline flex items-center justify-between font-mono text-[11px] text-cyan-400">
+                                <span>CLICK_TO_DECRYPT</span>
+                                <span>&rarr;</span>
+                            </div>
+                        </button>
+                    `;
+                }
+
+                return `
+                    <div class="h-52 rounded-lg bg-[#0d1018] border ${item.border} p-5 flex flex-col justify-between text-left relative">
+                        <div class="flex items-center justify-between font-mono text-[11px]">
+                            <span class="${item.accent} font-bold">${item.id}</span>
+                            <span class="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">UNLOCKED</span>
+                        </div>
+
+                        <div class="space-y-1.5 my-auto py-2">
+                            <h3 contenteditable="true" spellcheck="false" class="font-mono text-sm font-bold text-white cursor-text">
+                                ${item.title}
+                            </h3>
+                            <p contenteditable="true" spellcheck="false" class="text-xs text-slate-300 leading-relaxed cursor-text">
+                                ${item.detail}
+                            </p>
+                        </div>
+
+                        <div class="font-mono text-[10px] text-slate-500 border-t border-hairline pt-2">
+                            [INLINE_EDIT_ACTIVE]
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function unlockPayloadModule(idx) {
+            if (unlockedVaultIds.has(idx) || decryptingIds.has(idx)) return;
+            decryptingIds.add(idx);
+            renderPayloadVault();
+            playPacketPopFx();
+
+            setTimeout(() => {
+                decryptingIds.delete(idx);
+                unlockedVaultIds.add(idx);
+                renderPayloadVault();
+                playUnlockArpeggio();
+
+                if (typeof confetti === 'function') {
+                    confetti({
+                        particleCount: 35,
+                        spread: 60,
+                        shapes: ['square'],
+                        origin: { y: 0.78 }
+                    });
+                }
+            }, 520);
+        }
+
+        function relockAllPayloads() {
+            unlockedVaultIds.clear();
+            decryptingIds.clear();
+            renderPayloadVault();
+        }
+
+        /* ==========================================================================
+           8. INITIALIZATION
+           ========================================================================== */
+        window.addEventListener('DOMContentLoaded', () => {
+            renderSpecimenMatrix();
+            renderPayloadVault();
+            renderOscilloscopeLoop();
+
+            setTimeout(() => {
+                fireVectorBurst();
+                spawnTelemetryWave(4);
+            }, 450);
+
+            setInterval(() => {
+                if (document.visibilityState === 'visible') {
+                    spawnTelemetryNode();
+                }
+            }, 4500);
+        });
+    </script>
+
+</body></html>
